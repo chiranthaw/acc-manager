@@ -442,7 +442,15 @@ function App() {
         <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-900/90 backdrop-blur">
           <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-8">
-              <p className="text-base font-semibold text-white">ACC Manager</p>
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/src/images/acc-logo-new.png" 
+                  alt="ACC Logo"
+                  className="h-8 w-8 object-contain"
+                  style={{ filter: 'brightness(0) invert(1)' }}
+                />
+                <p className="text-base font-semibold text-white">ACC Manager</p>
+              </div>
               <nav className="hidden items-center gap-5 text-sm text-slate-300 sm:flex">
                 <a className="text-white" href="#">
                   Home
@@ -818,17 +826,26 @@ function App() {
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100 antialiased sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[80vh] w-full max-w-5xl items-center justify-center">
         <div className="grid w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 shadow-2xl backdrop-blur md:grid-cols-2">
-          <section className="relative hidden border-r border-slate-800 bg-gradient-to-b from-indigo-600/30 via-slate-900 to-slate-900 p-10 md:block">
-            <p className="inline-flex items-center rounded-full border border-indigo-300/20 bg-indigo-400/10 px-3 py-1 text-xs font-medium text-indigo-200">
-              Supabase Auth
-            </p>
-            <h1 className="mt-6 text-3xl font-semibold leading-tight text-white">
-              Welcome back
-            </h1>
-            <p className="mt-3 max-w-sm text-sm text-slate-300">
-              Sign in securely and access your app from anywhere with
-              cloud-hosted data.
-            </p>
+          <section 
+            className="relative hidden border-r border-slate-800 bg-gradient-to-b from-indigo-600/30 via-slate-900 to-slate-900 p-10 md:flex md:flex-col md:items-center md:justify-center">
+            <div className="flex flex-col items-center text-center">
+              <p className="inline-flex items-center rounded-full border border-indigo-300/20 bg-indigo-400/10 px-3 py-1 text-xs font-medium text-indigo-200">
+                Supabase Auth
+              </p>
+              <h1 className="mt-6 text-3xl font-semibold leading-tight text-white">
+                Welcome back
+              </h1>
+              <p className="mt-3 max-w-sm text-sm text-slate-300">
+                Sign in securely and access your app from anywhere with
+                cloud-hosted data.
+              </p>
+              <img 
+                src="/src/images/acc-logo-new.png" 
+                alt="ACC Logo"
+                className="mt-8 max-w-xs rounded-lg object-contain"
+                style={{ filter: 'brightness(0) invert(1)' }}
+              />
+            </div>
           </section>
 
           <section className="p-6 sm:p-10">
