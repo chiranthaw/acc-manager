@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getSupabaseClient, isSupabaseConfigured } from './lib/supabase';
+import logoImg from './images/acc-logo-new.png';
 
 const MEMBERSHIP_OPTIONS = [
   { value: 'full', label: 'Full membership' },
@@ -444,7 +445,7 @@ function App() {
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-3">
                 <img 
-                  src="/src/images/acc-logo-new.png" 
+                  src={logoImg}
                   alt="ACC Logo"
                   className="h-8 w-8 object-contain"
                   style={{ filter: 'brightness(0) invert(1)' }}
@@ -840,7 +841,7 @@ function App() {
                 cloud-hosted data.
               </p>
               <img 
-                src="/src/images/acc-logo-new.png" 
+                src={logoImg}
                 alt="ACC Logo"
                 className="mt-8 max-w-xs rounded-lg object-contain"
                 style={{ filter: 'brightness(0) invert(1)' }}
