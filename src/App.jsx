@@ -26,6 +26,9 @@ function App() {
   const [playerModalMode, setPlayerModalMode] = useState('add');
   const [editingPlayerId, setEditingPlayerId] = useState(null);
   const [newPlayerName, setNewPlayerName] = useState('');
+  const [newPlayerEmail, setNewPlayerEmail] = useState('');
+  const [newPlayerPhone, setNewPlayerPhone] = useState('');
+  const [newPlayerAddress, setNewPlayerAddress] = useState('');
   const [newPlayerTeam, setNewPlayerTeam] = useState('first');
   const [newPlayerYear, setNewPlayerYear] = useState(currentYear);
   const [newPlayerMembership, setNewPlayerMembership] = useState('full');
@@ -117,7 +120,7 @@ function App() {
     try {
       const { data: playersData, error: playersError } = await supabase
         .from('players')
-        .select('id, full_name, main_team')
+        .select('id, full_name, main_team, email, phone, address')
         .order('full_name', { ascending: true });
 
       if (playersError) {
@@ -152,6 +155,9 @@ function App() {
         return {
           id: player.id,
           fullName: player.full_name,
+          email: player.email || '',
+          phone: player.phone || '',
+          address: player.address || '',
           team: player.main_team || 'first',
           membershipType: status?.membership_type || 'none',
           paymentStatus: status?.payment_status || 'unpaid',
@@ -233,13 +239,18 @@ function App() {
       let playerId = editingPlayerId;
 
       if (playerModalMode === 'add') {
+        const insertPayload = {
+          full_name: name,
+          main_team: newPlayerTeam,
+          created_by: session.user.id,
+        };
+        if (newPlayerEmail.trim()) insertPayload.email = newPlayerEmail.trim();
+        if (newPlayerPhone.trim()) insertPayload.phone = newPlayerPhone.trim();
+        if (newPlayerAddress.trim()) insertPayload.address = newPlayerAddress.trim();
+
         const { data: playerData, error: playerError } = await supabase
           .from('players')
-          .insert({
-            full_name: name,
-            main_team: newPlayerTeam,
-            created_by: session.user.id,
-          })
+          .insert(insertPayload)
           .select('id, full_name')
           .single();
 
@@ -249,9 +260,17 @@ function App() {
 
         playerId = playerData.id;
       } else {
+        const updatePayload = { full_name: name, main_team: newPlayerTeam };
+        if (newPlayerEmail.trim()) updatePayload.email = newPlayerEmail.trim();
+        else updatePayload.email = null;
+        if (newPlayerPhone.trim()) updatePayload.phone = newPlayerPhone.trim();
+        else updatePayload.phone = null;
+        if (newPlayerAddress.trim()) updatePayload.address = newPlayerAddress.trim();
+        else updatePayload.address = null;
+
         const { error: updatePlayerError } = await supabase
           .from('players')
-          .update({ full_name: name, main_team: newPlayerTeam })
+          .update(updatePayload)
           .eq('id', editingPlayerId);
 
         if (updatePlayerError) {
@@ -270,6 +289,9 @@ function App() {
       await loadPlayersForYear(selectedYear);
 
       setNewPlayerName('');
+      setNewPlayerEmail('');
+      setNewPlayerPhone('');
+      setNewPlayerAddress('');
       setNewPlayerTeam('first');
       setNewPlayerMembership('full');
       setNewPlayerAmount('2000');
@@ -289,6 +311,9 @@ function App() {
     setPlayerModalMode('add');
     setEditingPlayerId(null);
     setNewPlayerName('');
+    setNewPlayerEmail('');
+    setNewPlayerPhone('');
+    setNewPlayerAddress('');
     setNewPlayerTeam('first');
     setNewPlayerYear(selectedYear);
     setNewPlayerMembership('full');
@@ -301,6 +326,9 @@ function App() {
     setPlayerModalMode('edit');
     setEditingPlayerId(player.id);
     setNewPlayerName(player.fullName);
+    setNewPlayerEmail(player.email || '');
+    setNewPlayerPhone(player.phone || '');
+    setNewPlayerAddress(player.address || '');
     setNewPlayerTeam(player.team || 'first');
     setNewPlayerYear(selectedYear);
     setNewPlayerMembership(player.membershipType);
@@ -610,7 +638,7 @@ function App() {
           </div>
         </header>
 
-        <section className="mx-auto min-h-[calc(100vh-4rem)] w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <section className="mx-auto min-h-[calc(100vh-4rem)] w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
           <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -652,16 +680,19 @@ function App() {
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
                     Player
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">
+                    Email
+                  </th>
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">
                     Team
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">
                     Membership ({selectedYear})
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">
                     Amount ({selectedYear})
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">
                     Payment progress ({selectedYear})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
@@ -673,7 +704,7 @@ function App() {
                 {dashboardLoading ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="px-4 py-5 text-sm text-slate-400"
                     >
                       Loading players...
@@ -682,7 +713,7 @@ function App() {
                 ) : filteredPlayers.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="px-4 py-5 text-sm text-slate-400"
                     >
                       No players found for this search.
@@ -694,26 +725,31 @@ function App() {
                       <td className="px-4 py-3 text-sm text-slate-100">
                         {player.fullName}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="hidden px-4 py-3 sm:table-cell">
+                        <p className="text-sm text-slate-200">
+                          {player.email || '—'}
+                        </p>
+                      </td>
+                      <td className="hidden px-4 py-3 sm:table-cell">
                         <p className="text-sm text-slate-200">
                           {TEAM_OPTIONS.find(
                             (option) => option.value === player.team,
                           )?.label || '1st team'}
                         </p>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="hidden px-4 py-3 sm:table-cell">
                         <p className="text-sm text-slate-200">
                           {MEMBERSHIP_OPTIONS.find(
                             (option) => option.value === player.membershipType,
                           )?.label || player.membershipType}
                         </p>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="hidden px-4 py-3 sm:table-cell">
                         <p className="text-sm text-slate-200">
                           {Math.round(player.amountDue)}
                         </p>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="hidden px-4 py-3 sm:table-cell">
                         <div className="space-y-1">
                           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
                             <div
@@ -796,6 +832,57 @@ function App() {
                       placeholder="Player full name"
                       className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
                     />
+
+                  <div>
+                    <label
+                      className="mb-1.5 block text-sm text-slate-300"
+                      htmlFor="new-player-email"
+                    >
+                      Email (optional)
+                    </label>
+                    <input
+                      id="new-player-email"
+                      type="email"
+                      value={newPlayerEmail}
+                      onChange={(e) => setNewPlayerEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className="mb-1.5 block text-sm text-slate-300"
+                      htmlFor="new-player-phone"
+                    >
+                      Phone (optional)
+                    </label>
+                    <input
+                      id="new-player-phone"
+                      type="tel"
+                      value={newPlayerPhone}
+                      onChange={(e) => setNewPlayerPhone(e.target.value)}
+                      placeholder="+45 25 47 85 44"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className="mb-1.5 block text-sm text-slate-300"
+                      htmlFor="new-player-address"
+                    >
+                      Address (optional)
+                    </label>
+                    <textarea
+                      id="new-player-address"
+                      value={newPlayerAddress}
+                      onChange={(e) => setNewPlayerAddress(e.target.value)}
+                      placeholder="Street, City, State ZIP"
+                      rows={2}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
                   </div>
 
                   <div>

@@ -3,10 +3,22 @@ create extension if not exists pgcrypto;
 create table if not exists public.players (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
+  email text,
+  phone text,
+  address text,
   main_team text not null default 'first' check (main_team in ('first', 'second')),
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now()
 );
+
+alter table public.players
+add column if not exists phone text;
+
+alter table public.players
+add column if not exists address text;
+
+alter table public.players
+add column if not exists email text;
 
 alter table public.players
 add column if not exists main_team text not null default 'first' check (main_team in ('first', 'second'));
