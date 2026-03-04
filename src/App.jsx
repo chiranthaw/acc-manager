@@ -385,6 +385,38 @@ function App() {
     }
   };
 
+  const handleSendPaymentReminder = async (player) => {
+    if (!player.email) {
+      setDashboardError('Player has no email address.');
+      return;
+    }
+
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        setDashboardError('Supabase not configured.');
+        return;
+      }
+
+      const response = await supabase.functions.invoke('send-payment-reminder', {
+        body: {
+          playerId: player.id,
+          year: selectedYear
+        }
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      setDashboardError('');
+      // You could add a success message here
+      alert(`Payment reminder sent to ${player.fullName} at ${player.email}`);
+    } catch (error) {
+      setDashboardError(error.message || 'Failed to send payment reminder.');
+    }
+  };
+
   const handleLogout = async () => {
     const supabase = getSupabaseClient();
 
@@ -777,6 +809,14 @@ function App() {
                             className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500 hover:text-white"
                           >
                             Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSendPaymentReminder(player)}
+                            disabled={!player.email}
+                            className="rounded-lg border border-blue-600/60 px-3 py-1.5 text-sm text-blue-200 transition hover:border-blue-500 hover:text-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Send Reminder
                           </button>
                           <button
                             type="button"
