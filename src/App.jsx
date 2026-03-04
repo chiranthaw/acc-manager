@@ -35,10 +35,21 @@ function App() {
   const [deletingPlayerId, setDeletingPlayerId] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [mode, setMode] = useState('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  // forgot password states
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotMessage, setForgotMessage] = useState('');
+  // profile editing states
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileFullName, setProfileFullName] = useState('');
+  const [profileEmail, setProfileEmail] = useState('');
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -74,6 +85,15 @@ function App() {
       subscription.unsubscribe();
     };
   }, []);
+
+  // reset profile state when session changes (e.g. logout)
+  useEffect(() => {
+    if (!session) {
+      setProfileFullName('');
+      setProfileEmail('');
+      setIsProfileModalOpen(false);
+    }
+  }, [session]);
 
   useEffect(() => {
     if (!session) {
@@ -347,15 +367,63 @@ function App() {
     await supabase.auth.signOut();
   };
 
+  const openProfileModal = () => {
+    if (!session) return;
+    setProfileFullName(session.user.user_metadata?.full_name || '');
+    setProfileEmail(session.user.email);
+    setProfileError('');
+    setIsProfileModalOpen(true);
+  };
+
+  const handleSaveProfile = async () => {
+    setProfileError('');
+    if (!session) return;
+    if (!profileFullName.trim()) {
+      setProfileError('Name cannot be empty.');
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setProfileError('Supabase client could not be initialized.');
+      return;
+    }
+
+    setProfileLoading(true);
+    try {
+      const updates = { data: { full_name: profileFullName } };
+      // optionally include email update here if desired
+      const { error } = await supabase.auth.updateUser(updates);
+      if (error) throw error;
+
+      // refresh session so header shows updated name
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session ?? null);
+      setIsProfileModalOpen(false);
+    } catch (err) {
+      setProfileError(err.message || 'Unable to update profile.');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
     setMessage('');
+    // clear password-reset notices as well
+    setForgotError('');
+    setForgotMessage('');
 
     if (!isSupabaseConfigured) {
       setError(
         'Supabase is not configured yet. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env.local file.',
       );
+      return;
+    }
+
+    if (mode === 'signup' && !fullName.trim()) {
+      setError('Please enter your full name.');
       return;
     }
 
@@ -386,6 +454,11 @@ function App() {
         const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              full_name: fullName,
+            },
+          },
         });
 
         if (signUpError) {
@@ -400,6 +473,40 @@ function App() {
       setError(submitError.message || 'Something went wrong.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setForgotError('');
+    setForgotMessage('');
+
+    if (!email) {
+      setForgotError('Please enter your email address.');
+      return;
+    }
+
+    if (!isSupabaseConfigured) {
+      setForgotError('Supabase is not configured yet.');
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setForgotError('Supabase client could not be initialized.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        email,
+      );
+      if (resetError) throw resetError;
+      setForgotMessage('Password recovery email sent. Check your inbox.');
+    } catch (err) {
+      setForgotError(err.message || 'Failed to send recovery email.');
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -479,6 +586,19 @@ function App() {
                   </option>
                 ))}
               </select>
+              <p className="hidden text-sm text-slate-300 sm:block">
+                Signed in as{' '}
+                <span className="font-medium text-white">
+                  {session.user.user_metadata?.full_name || session.user.email}
+                </span>
+              </p>
+              <button
+                type="button"
+                onClick={openProfileModal}
+                className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+              >
+                Profile
+              </button>
               <button
                 type="button"
                 onClick={handleLogout}
@@ -818,6 +938,92 @@ function App() {
               </div>
             </div>
           )}
+
+          {isProfileModalOpen && (
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
+              <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-white">
+                    Edit profile
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!profileLoading) setIsProfileModalOpen(false);
+                    }}
+                    className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:text-white"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveProfile();
+                  }}
+                  className="mt-4 space-y-4"
+                >
+                  <div>
+                    <label
+                      className="mb-1.5 block text-sm text-slate-300"
+                      htmlFor="profile-full-name"
+                    >
+                      Full name
+                    </label>
+                    <input
+                      id="profile-full-name"
+                      type="text"
+                      required
+                      value={profileFullName}
+                      onChange={(e) => setProfileFullName(e.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className="mb-1.5 block text-sm text-slate-300"
+                      htmlFor="profile-email"
+                    >
+                      Email
+                    </label>
+                    <input
+                      id="profile-email"
+                      type="email"
+                      value={profileEmail}
+                      disabled
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3.5 py-2.5 text-sm text-slate-400 outline-none"
+                    />
+                  </div>
+
+                  {profileError && (
+                    <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+                      {profileError}
+                    </p>
+                  )}
+
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsProfileModalOpen(false)}
+                      disabled={profileLoading}
+                      className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500 hover:text-white disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={profileLoading}
+                      className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {profileLoading ? 'Saving...' : 'Save changes'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </section>
       </main>
     );
@@ -863,6 +1069,26 @@ function App() {
               </p>
 
               <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
+                {mode === 'signup' && (
+                  <div>
+                    <label
+                      className="mb-1.5 block text-sm font-medium text-slate-200"
+                      htmlFor="fullName"
+                    >
+                      Full name
+                    </label>
+                    <input
+                      id="fullName"
+                      type="text"
+                      required
+                      value={fullName}
+                      onChange={(event) => setFullName(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none ring-indigo-400 transition placeholder:text-slate-500 focus:border-indigo-400 focus:ring-2"
+                      placeholder="Your name"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label
                     className="mb-1.5 block text-sm font-medium text-slate-200"
@@ -900,6 +1126,32 @@ function App() {
                   />
                 </div>
 
+                {/* forgot password link only when logging in */}
+                {mode === 'login' && (
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      disabled={forgotLoading}
+                      onClick={handleForgotPassword}
+                      className="text-sm text-indigo-300 hover:text-indigo-200"
+                    >
+                      {forgotLoading ? 'Sending...' : 'Forgot password?'}
+                    </button>
+                  </div>
+                )}
+
+                {forgotError && (
+                  <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+                    {forgotError}
+                  </p>
+                )}
+
+                {forgotMessage && (
+                  <p className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+                    {forgotMessage}
+                  </p>
+                )}
+
                 {error && (
                   <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
                     {error}
@@ -935,6 +1187,9 @@ function App() {
                     setMode(mode === 'login' ? 'signup' : 'login');
                     setError('');
                     setMessage('');
+                    setForgotError('');
+                    setForgotMessage('');
+                    setFullName('');
                   }}
                   className="font-medium text-indigo-300 hover:text-indigo-200"
                 >
