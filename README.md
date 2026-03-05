@@ -26,3 +26,9 @@ After login, the home page shows:
 - `npm run dev` to start development server
 - `npm run build` to create production build
 - `npm run preview` to preview the production build
+
+## Update SUperbase send-mail
+
+ - npx supabase login
+
+ - npx supabase functions deploy send-email --no-verify-jwt

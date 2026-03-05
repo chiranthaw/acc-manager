@@ -58,7 +58,7 @@ function App() {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailSubject, setEmailSubject] = useState('ACC Membership - Payment Reminder');
   const [emailBody, setEmailBody] = useState(
-    'We hope this email finds you well.\n\nThis is a friendly reminder that you have outstanding payments for your ACC membership for the current season.\n\nPlease arrange payment at your earliest convenience to ensure uninterrupted access to club activities and maintain your active membership status.\n\nThank you for your attention to this matter.',
+    'This is a friendly reminder that you have outstanding payments for your ACC membership for the current season.\n\nPlease arrange payment at your earliest convenience.\n\nThank you for your attention to this matter.',
   );
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
@@ -102,7 +102,6 @@ function App() {
     };
   }, []);
 
-  // reset profile state when session changes (e.g. logout)
   useEffect(() => {
     if (!session) {
       setProfileFullName('');
@@ -1470,14 +1469,13 @@ function App() {
             className="relative hidden border-r border-slate-800 bg-gradient-to-b from-indigo-600/30 via-slate-900 to-slate-900 p-10 md:flex md:flex-col md:items-center md:justify-center">
             <div className="flex flex-col items-center text-center">
               <p className="inline-flex items-center rounded-full border border-indigo-300/20 bg-indigo-400/10 px-3 py-1 text-xs font-medium text-indigo-200">
-                Supabase Auth
+                Aalborg Cricket Club Manager
               </p>
               <h1 className="mt-6 text-3xl font-semibold leading-tight text-white">
                 Welcome back
               </h1>
               <p className="mt-3 max-w-sm text-sm text-slate-300">
-                Sign in securely and access your app from anywhere with
-                cloud-hosted data.
+                Sign in securely and access your dashboard to manage players and payments.
               </p>
               <img 
                 src={logoImg}
