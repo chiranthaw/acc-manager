@@ -8,14 +8,27 @@ interface EmailPayload {
   html: string;
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: corsHeaders,
+    });
+  }
+
   try {
     const payload: EmailPayload = await req.json();
 
     if (!RESEND_API_KEY) {
       return new Response(
         JSON.stringify({ error: 'Resend API key not configured' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -37,19 +50,19 @@ serve(async (req) => {
       const error = await response.text();
       return new Response(
         JSON.stringify({ error: `Failed to send email: ${error}` }),
-        { status: response.status, headers: { 'Content-Type': 'application/json' } }
+        { status: response.status, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
     const result = await response.json();
     return new Response(JSON.stringify(result), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 });
