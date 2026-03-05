@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { getSupabaseClient, isSupabaseConfigured } from './lib/supabase';
 import logoImg from './images/acc-logo-new.png';
+import LandingPage from './LandingPage';
 
 const MEMBERSHIP_OPTIONS = [
   { value: 'full', label: 'Full membership' },
@@ -13,7 +15,7 @@ const TEAM_OPTIONS = [
   { value: 'second', label: '2nd team' },
 ];
 
-function App() {
+function AdminPortalApp() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [dashboardLoading, setDashboardLoading] = useState(false);
@@ -1632,6 +1634,17 @@ function App() {
         </div>
       </div>
     </main>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/admin/*" element={<AdminPortalApp />} />
+        <Route path="/*" element={<LandingPage />} />
+      </Routes>
+    </Router>
   );
 }
 
