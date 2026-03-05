@@ -1,7 +1,50 @@
+
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import logoImg from './images/acc-logo-new.png';
+import translations from './lang';
+import { FaFacebook, FaInstagram, FaYoutube } from 'react-icons/fa';
 
 const LandingPage = () => {
+  // Theme state: 'dark' | 'light'
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') || 'dark';
+    }
+    return 'dark';
+  });
+
+  // Language state: 'en' | 'da'
+  const [lang, setLang] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('lang') || 'en';
+    }
+    return 'en';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('lang', lang);
+  }, [lang]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const toggleLang = () => {
+    setLang((prev) => (prev === 'en' ? 'da' : 'en'));
+  };
+
+  // Use imported translations
+  const t = translations;
   const news = [
     {
       id: 1,
@@ -48,106 +91,129 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className={
+      `min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 text-white' : 'bg-gradient-to-br from-green-50 to-blue-50 text-gray-900'}`
+    }>
       {/* Header */}
-      <header className="bg-white shadow-lg">
+      <header className={`shadow-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <img src={logoImg} alt="ACC Logo" className="h-12 w-auto" />
-              <h1 className="text-2xl font-bold text-gray-900">Australian Cricket Club</h1>
+              <img
+                src={logoImg}
+                alt="ACC Logo"
+                className="h-12 w-auto"
+                style={theme === 'dark' ? { filter: 'brightness(0) invert(1)' } : {}}
+              />
+              <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t[lang].clubName.toUpperCase()}</h1>
             </div>
             <nav className="hidden md:flex space-x-8">
-              <a href="#about" className="text-gray-700 hover:text-green-600 transition-colors">About</a>
-              <a href="#news" className="text-gray-700 hover:text-green-600 transition-colors">News</a>
-              <a href="#events" className="text-gray-700 hover:text-green-600 transition-colors">Events</a>
-              <a href="#contact" className="text-gray-700 hover:text-green-600 transition-colors">Contact</a>
+              <a href="#about" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].about}</a>
+              <a href="#news" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].news}</a>
+              <a href="#events" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].events}</a>
+              <a href="#contact" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].contact}</a>
             </nav>
-            <Link
-              to="/admin"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Admin Portal
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className={`rounded-lg px-3 py-2 text-sm font-medium border transition-colors ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+                aria-label="Toggle dark/light mode"
+              >
+                {theme === 'dark' ? t[lang].light : t[lang].dark}
+              </button>
+              <button
+                onClick={toggleLang}
+                className={`rounded-lg px-3 py-2 text-sm font-medium border transition-colors ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+                aria-label="Toggle language"
+                style={{ marginLeft: 4 }}
+              >
+                {t[lang].lang}
+              </button>
+              <Link
+                to="/admin"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                {t[lang].adminPortal}
+              </Link>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-20">
+      <section className={`bg-gradient-to-r ${theme === 'dark' ? 'from-green-900 to-blue-900 text-white' : 'from-green-600 to-blue-600 text-white'} py-20`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Welcome to Australian Cricket Club
+            {t[lang].welcome}
           </h2>
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            Where passion meets performance. Join our community of cricket enthusiasts and experience the thrill of the game.
+            {lang === 'en'
+              ? 'Where passion meets performance. Join our community of cricket enthusiasts and experience the thrill of the game.'
+              : 'Hvor passion møder præstation. Bliv en del af vores cricketfællesskab og oplev spillets spænding.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/admin"
-              className="bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              className={theme === 'dark' ? 'bg-white text-green-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors' : 'bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors'}
             >
-              Access Admin Portal
+              {t[lang].accessAdmin}
             </Link>
             <a
               href="#contact"
-              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors"
+              className={theme === 'dark' ? 'border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-700 transition-colors' : 'border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors'}
             >
-              Get in Touch
+              {t[lang].getInTouch}
             </a>
           </div>
         </div>
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-16 bg-white">
+      <section id="about" className={theme === 'dark' ? 'py-16 bg-gray-900' : 'py-16 bg-white'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">About Our Club</h3>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Founded with a vision to promote cricket excellence, Australian Cricket Club has been a cornerstone of the community for decades.
-              We offer programs for players of all ages and skill levels, from juniors learning the basics to seasoned professionals.
-            </p>
+            <h3 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t[lang].aboutTitle}</h3>
+            <p className={`text-lg max-w-3xl mx-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{t[lang].aboutText}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <div className={theme === 'dark' ? 'bg-green-900 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4' : 'bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4'}>
                 <span className="text-2xl">🏏</span>
               </div>
-              <h4 className="text-xl font-semibold mb-2">Excellence</h4>
-              <p className="text-gray-600">Committed to developing skills and achieving success on and off the field.</p>
+              <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>{t[lang].excellence}</h4>
+              <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{t[lang].excellenceDesc}</p>
             </div>
             <div className="text-center">
-              <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <div className={theme === 'dark' ? 'bg-blue-900 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4' : 'bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4'}>
                 <span className="text-2xl">🤝</span>
               </div>
-              <h4 className="text-xl font-semibold mb-2">Community</h4>
-              <p className="text-gray-600">Building lasting relationships and fostering a supportive environment.</p>
+              <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>{t[lang].community}</h4>
+              <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{t[lang].communityDesc}</p>
             </div>
             <div className="text-center">
-              <div className="bg-yellow-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <div className={theme === 'dark' ? 'bg-yellow-900 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4' : 'bg-yellow-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4'}>
                 <span className="text-2xl">🏆</span>
               </div>
-              <h4 className="text-xl font-semibold mb-2">Achievement</h4>
-              <p className="text-gray-600">Celebrating victories and recognizing the dedication of our members.</p>
+              <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : ''}`}>{t[lang].achievement}</h4>
+              <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{t[lang].achievementDesc}</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* News Section */}
-      <section id="news" className="py-16 bg-gray-50">
+      <section id="news" className={theme === 'dark' ? 'py-16 bg-gray-800' : 'py-16 bg-gray-50'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">Latest News</h3>
-            <p className="text-lg text-gray-600">Stay updated with the latest happenings at our club</p>
+            <h3 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t[lang].newsTitle}</h3>
+            <p className={theme === 'dark' ? 'text-gray-300 text-lg' : 'text-gray-600 text-lg'}>{t[lang].newsDesc}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {news.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                <h4 className="text-xl font-semibold mb-2 text-gray-900">{item.title}</h4>
-                <p className="text-sm text-gray-500 mb-3">{item.date}</p>
-                <p className="text-gray-600">{item.summary}</p>
+              <div key={item.id} className={theme === 'dark' ? 'bg-gray-900 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow' : 'bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow'}>
+                <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{item.title}</h4>
+                <p className={theme === 'dark' ? 'text-gray-400 text-sm mb-3' : 'text-gray-500 text-sm mb-3'}>{item.date}</p>
+                <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{item.summary}</p>
               </div>
             ))}
           </div>
@@ -155,17 +221,17 @@ const LandingPage = () => {
       </section>
 
       {/* Events Section */}
-      <section id="events" className="py-16 bg-white">
+      <section id="events" className={theme === 'dark' ? 'py-16 bg-gray-900' : 'py-16 bg-white'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">Upcoming Events</h3>
-            <p className="text-lg text-gray-600">Join us for exciting cricket events and activities</p>
+            <h3 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t[lang].eventsTitle}</h3>
+            <p className={theme === 'dark' ? 'text-gray-300 text-lg' : 'text-gray-600 text-lg'}>{t[lang].eventsDesc}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {events.map((event) => (
-              <div key={event.id} className="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6 border border-gray-200">
-                <h4 className="text-xl font-semibold mb-2 text-gray-900">{event.title}</h4>
-                <div className="space-y-1 text-gray-600">
+              <div key={event.id} className={theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-6 border border-gray-700' : 'bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6 border border-gray-200'}>
+                <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{event.title}</h4>
+                <div className={theme === 'dark' ? 'space-y-1 text-gray-300' : 'space-y-1 text-gray-600'}>
                   <p><span className="font-medium">Date:</span> {event.date}</p>
                   <p><span className="font-medium">Time:</span> {event.time}</p>
                   <p><span className="font-medium">Location:</span> {event.location}</p>
@@ -177,27 +243,54 @@ const LandingPage = () => {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-16 bg-gray-900 text-white">
+      <section id="contact" className={theme === 'dark' ? 'py-16 bg-gray-950 text-white' : 'py-16 bg-gray-900 text-white'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">Get in Touch</h3>
-            <p className="text-lg text-gray-300">Have questions? We'd love to hear from you!</p>
+            <h3 className="text-3xl font-bold mb-4">{t[lang].contactTitle}</h3>
+            <p className="text-lg text-gray-300">{t[lang].contactDesc}</p>
           </div>
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-1 gap-8">
             <div>
-              <h4 className="text-xl font-semibold mb-4">Contact Information</h4>
-              <div className="space-y-3">
-                <p>📍 123 Cricket Lane, Melbourne, VIC 3000</p>
-                <p>📞 (03) 1234 5678</p>
-                <p>✉️ info@australiancricketclub.com.au</p>
+              <h4 className="text-xl font-semibold mb-4">{t[lang].contactInfo}</h4>
+              <div className="mb-6">
+                <div className="grid grid-cols-4 gap-4 w-full">
+                  {t[lang].addressBoxes.map((box, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-lg bg-gray-800/80 border border-gray-700 p-4 text-white min-h-[80px] flex flex-col items-start justify-center"
+                    >
+                      <div className="flex items-center gap-2 font-bold text-base mb-1">
+                        <span role="img" aria-label={box.heading}>{box.icon}</span>
+                        {box.heading}
+                      </div>
+                      {box.link ? (
+                        <a
+                          href={box.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline text-green-300 hover:text-green-400 text-sm text-left"
+                        >
+                          {box.address}
+                        </a>
+                      ) : (
+                        <div className="text-sm text-left">{box.address}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div>
-              <h4 className="text-xl font-semibold mb-4">Follow Us</h4>
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">Facebook</a>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">Instagram</a>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">Twitter</a>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-center md:space-x-8 mb-4 mt-4 text-lg">
+                <div className="flex flex-col md:flex-row md:items-center md:space-x-4 justify-center">
+                  <span className="font-medium">{t[lang].phone}</span>
+                  <span className="hidden md:inline-block">|</span>
+                  <span className="font-medium">{t[lang].email}</span>
+                </div>
+                <div className="flex flex-col md:flex-row md:items-center md:space-x-2 md:ml-8 mt-2 md:mt-0 justify-center">
+                  <span className="font-semibold mr-2">{t[lang].followUs}</span>
+                  <a href="#" className="text-gray-300 hover:text-white transition-colors mr-2 text-2xl" aria-label="Facebook"><FaFacebook /></a>
+                  <a href="#" className="text-gray-300 hover:text-white transition-colors mr-2 text-2xl" aria-label="Instagram"><FaInstagram /></a>
+                  <a href="#" className="text-gray-300 hover:text-white transition-colors text-2xl" aria-label="YouTube"><FaYoutube /></a>
+                </div>
               </div>
             </div>
           </div>
@@ -205,9 +298,9 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8">
+      <footer className={theme === 'dark' ? 'bg-gray-900 text-white py-8' : 'bg-gray-800 text-white py-8'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>&copy; 2026 Australian Cricket Club. All rights reserved.</p>
+          <p>{t[lang].copyright}</p>
         </div>
       </footer>
     </div>
