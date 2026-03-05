@@ -53,6 +53,19 @@ function App() {
   const [profileEmail, setProfileEmail] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
+  // admin section states
+  const [currentView, setCurrentView] = useState('players'); // 'players' or 'admin'
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('Payment Reminder - ACC Membership');
+  const [emailBody, setEmailBody] = useState(
+    'Dear Player,\n\nYou have outstanding payments for your ACC membership. Please settle your dues at your earliest convenience.\n\nThank you',
+  );
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [unpaidPlayers, setUnpaidPlayers] = useState([]);
+  const [unpaidLoadingError, setUnpaidLoadingError] = useState('');
+  const [selectedPlayersForEmail, setSelectedPlayersForEmail] = useState(new Set());
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -538,6 +551,136 @@ function App() {
     }
   };
 
+  const loadUnpaidPlayers = async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase || !session) return;
+
+    setUnpaidLoadingError('');
+    try {
+      const { data: playersData, error: playersError } = await supabase
+        .from('players')
+        .select('id, full_name, email, main_team')
+        .order('full_name', { ascending: true });
+
+      if (playersError) throw playersError;
+
+      const playerIds = (playersData || []).map((player) => player.id);
+
+      if (playerIds.length === 0) {
+        setUnpaidPlayers([]);
+        return;
+      }
+
+      const { data: statusData, error: statusError } = await supabase
+        .from('player_year_status')
+        .select('player_id, amount_due, amount_paid')
+        .eq('year', selectedYear)
+        .in('player_id', playerIds);
+
+      if (statusError) throw statusError;
+
+      const statusMap = new Map(
+        (statusData || []).map((status) => [status.player_id, status]),
+      );
+
+      const unpaid = (playersData || [])
+        .map((player) => {
+          const status = statusMap.get(player.id);
+          return {
+            id: player.id,
+            fullName: player.full_name,
+            email: player.email,
+            team: player.main_team,
+            amountDue: status?.amount_due || 0,
+            amountPaid: status?.amount_paid || 0,
+          };
+        })
+        .filter(
+          (player) =>
+            player.email &&
+            player.amountDue > 0 &&
+            player.amountPaid < player.amountDue,
+        );
+
+      setUnpaidPlayers(unpaid);
+    } catch (err) {
+      setUnpaidLoadingError(err.message || 'Failed to load unpaid players.');
+    }
+  };
+
+  const openEmailModal = async () => {
+    setEmailError('');
+    setEmailMessage('');
+    await loadUnpaidPlayers();
+    // Select all players by default
+    setSelectedPlayersForEmail(new Set());
+    setIsEmailModalOpen(true);
+  };
+
+  const handleSendEmails = async () => {
+    setEmailError('');
+    setEmailMessage('');
+
+    if (selectedPlayersForEmail.size === 0) {
+      setEmailError('Please select at least one player to receive the email.');
+      return;
+    }
+
+    if (!emailSubject.trim() || !emailBody.trim()) {
+      setEmailError('Subject and body cannot be empty.');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      // Filter to only send to selected players
+      const playersToEmail = unpaidPlayers.filter((player) =>
+        selectedPlayersForEmail.has(player.id),
+      );
+
+      // Send emails one by one
+      for (const player of playersToEmail) {
+        const supabase = getSupabaseClient();
+        if (!supabase) throw new Error('Supabase client not initialized');
+
+        // Convert plain text to HTML (preserve line breaks)
+        const htmlBody = emailBody
+          .split('\n')
+          .map((line) => `<p>${line.trim() || '&nbsp;'}</p>`)
+          .join('');
+
+        const { error: emailError } = await supabase.functions.invoke(
+          'send-email',
+          {
+            body: {
+              to: player.email,
+              subject: emailSubject,
+              html: htmlBody,
+            },
+          },
+        );
+
+        if (emailError) {
+          console.error(`Failed to send email to ${player.email}:`, emailError);
+        }
+      }
+
+      setEmailMessage(
+        `Emails sent to ${playersToEmail.length} player(s).`,
+      );
+      setTimeout(() => {
+        setIsEmailModalOpen(false);
+      }, 2000);
+    } catch (err) {
+      setEmailError(
+        err.message ||
+          'Failed to send emails. Ensure your backend email function is configured.',
+      );
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100 antialiased sm:px-6 lg:px-8">
@@ -588,9 +731,24 @@ function App() {
                 <p className="text-base font-semibold text-white">ACC Manager</p>
               </div>
               <nav className="hidden items-center gap-5 text-sm text-slate-300 sm:flex">
-                <a className="text-white" href="#">
-                  Home
-                </a>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('players')}
+                  className={`transition ${
+                    currentView === 'players' ? 'text-white' : 'hover:text-white'
+                  }`}
+                >
+                  Players
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('admin')}
+                  className={`transition ${
+                    currentView === 'admin' ? 'text-white' : 'hover:text-white'
+                  }`}
+                >
+                  Admin
+                </button>
               </nav>
             </div>
             <div className="flex items-center gap-3">
@@ -639,15 +797,17 @@ function App() {
         </header>
 
         <section className="mx-auto min-h-[calc(100vh-4rem)] w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-xl font-semibold text-white">Players</h1>
-                <p className="mt-1 text-sm text-slate-400">
-                  Register players and manage membership and payment status for{' '}
-                  {selectedYear}.
-                </p>
-              </div>
+          {currentView === 'players' ? (
+            <>
+              <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h1 className="text-xl font-semibold text-white">Players</h1>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Register players and manage membership and payment status for{' '}
+                      {selectedYear}.
+                    </p>
+                  </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                 <input
                   type="text"
@@ -796,6 +956,28 @@ function App() {
               </tbody>
             </table>
           </div>
+            </>
+          ) : (
+            <>
+              <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h1 className="text-xl font-semibold text-white">Admin</h1>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Manage email communications for unpaid players.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openEmailModal}
+                    className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
+                  >
+                    Send Payment Reminder
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
           {isPlayerModalOpen && (
             <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
@@ -1105,6 +1287,169 @@ function App() {
                       className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {profileLoading ? 'Saving...' : 'Save changes'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {isEmailModalOpen && (
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
+              <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-white">
+                    Send Payment Reminder
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!emailLoading) setIsEmailModalOpen(false);
+                    }}
+                    className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:text-white"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendEmails();
+                  }}
+                  className="mt-4 space-y-4"
+                >
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <label className="text-sm text-slate-300">
+                        Unpaid Players ({selectedPlayersForEmail.size} selected)
+                      </label>
+                      <div className="space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPlayersForEmail(
+                              new Set(unpaidPlayers.map((p) => p.id)),
+                            );
+                          }}
+                          className="text-xs text-indigo-400 hover:text-indigo-300"
+                        >
+                          Select All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPlayersForEmail(new Set());
+                          }}
+                          className="text-xs text-slate-400 hover:text-slate-300"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                    {unpaidLoadingError && (
+                      <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+                        {unpaidLoadingError}
+                      </p>
+                    )}
+                    {unpaidPlayers.length > 0 && (
+                      <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-700 bg-slate-950 p-3">
+                        <ul className="space-y-2">
+                          {unpaidPlayers.map((player) => (
+                            <li key={player.id} className="flex items-start">
+                              <input
+                                type="checkbox"
+                                id={`player-${player.id}`}
+                                checked={selectedPlayersForEmail.has(player.id)}
+                                onChange={(e) => {
+                                  const newSelected = new Set(
+                                    selectedPlayersForEmail,
+                                  );
+                                  if (e.target.checked) {
+                                    newSelected.add(player.id);
+                                  } else {
+                                    newSelected.delete(player.id);
+                                  }
+                                  setSelectedPlayersForEmail(newSelected);
+                                }}
+                                className="mt-0.5 mr-2 cursor-pointer rounded border-slate-600 accent-indigo-500"
+                              />
+                              <label
+                                htmlFor={`player-${player.id}`}
+                                className="text-xs text-slate-300 cursor-pointer flex-1"
+                              >
+                                {player.fullName} - {player.email}
+                              </label>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      className="mb-1.5 block text-sm text-slate-300"
+                      htmlFor="email-subject"
+                    >
+                      Email Subject
+                    </label>
+                    <input
+                      id="email-subject"
+                      type="text"
+                      required
+                      value={emailSubject}
+                      onChange={(e) => setEmailSubject(e.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className="mb-1.5 block text-sm text-slate-300"
+                      htmlFor="email-body"
+                    >
+                      Email Body
+                    </label>
+                    <textarea
+                      id="email-body"
+                      required
+                      value={emailBody}
+                      onChange={(e) => setEmailBody(e.target.value)}
+                      rows={5}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+
+                  {emailError && (
+                    <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+                      {emailError}
+                    </p>
+                  )}
+
+                  {emailMessage && (
+                    <p className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+                      {emailMessage}
+                    </p>
+                  )}
+
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEmailModalOpen(false)}
+                      disabled={emailLoading}
+                      className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500 hover:text-white disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={emailLoading || selectedPlayersForEmail.size === 0}
+                      className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {emailLoading
+                        ? 'Sending...'
+                        : `Send Emails (${selectedPlayersForEmail.size})`}
                     </button>
                   </div>
                 </form>
