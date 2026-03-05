@@ -56,9 +56,9 @@ function App() {
   // admin section states
   const [currentView, setCurrentView] = useState('players'); // 'players' or 'admin'
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-  const [emailSubject, setEmailSubject] = useState('Payment Reminder - ACC Membership');
+  const [emailSubject, setEmailSubject] = useState('ACC Membership - Payment Reminder');
   const [emailBody, setEmailBody] = useState(
-    'Dear Player,\n\nYou have outstanding payments for your ACC membership. Please settle your dues at your earliest convenience.\n\nThank you',
+    'We hope this email finds you well.\n\nThis is a friendly reminder that you have outstanding payments for your ACC membership for the current season.\n\nPlease arrange payment at your earliest convenience to ensure uninterrupted access to club activities and maintain your active membership status.\n\nThank you for your attention to this matter.',
   );
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
@@ -656,6 +656,7 @@ function App() {
               to: player.email,
               subject: emailSubject,
               html: htmlBody,
+              playerName: player.fullName,
             },
           },
         );
