@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import logoImg from './images/acc-logo-new.png';
 import translations from './lang';
 import ContactSection from './ContactSection';
+import SponsorsSection from './SponsorsSection';
 
 const LandingPage = () => {
   // Theme state: 'dark' | 'light'
@@ -111,6 +112,7 @@ const LandingPage = () => {
               <a href="#about" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].about}</a>
               <a href="#news" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].news}</a>
               <a href="#events" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].events}</a>
+              <a href="#sponsors" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>Sponsors</a>
               <a href="#contact" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].contact}</a>
             </nav>
             <div className="flex items-center gap-2">
@@ -241,6 +243,9 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      {/* Sponsors Section */}
+      <SponsorsSection theme={theme} />
 
       {/* Contact Section */}
       <ContactSection lang={lang} theme={theme} />
