@@ -119,7 +119,12 @@ export default function EventManager() {
                 <td className="px-4 py-2 text-slate-100">{ev.date}</td>
                 <td className="px-4 py-2 text-slate-100">{ev.is_active ? 'Yes' : 'No'}</td>
                 <td className="px-4 py-2 flex gap-2">
-                  <button onClick={() => openEditModal(ev)} className="rounded bg-slate-700 px-3 py-1 text-xs text-white hover:bg-slate-600">Edit</button>
+                  <button
+                    onClick={() => openEditModal(ev)}
+                    className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-200 transition hover:border-slate-500 hover:text-white"
+                  >
+                    Edit
+                  </button>
                   <button
                     onClick={() => handleDelete(ev.id)}
                     className="rounded-lg border border-rose-600/60 px-3 py-1.5 text-xs text-rose-200 transition hover:border-rose-500 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
