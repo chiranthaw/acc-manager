@@ -5,6 +5,7 @@ import logoImg from './images/acc-logo-new.png';
 import translations from './lang';
 import ContactSection from './ContactSection';
 import SponsorsSection from './SponsorsSection';
+import ActivityCarousel from './ActivityCarousel';
 
 const LandingPage = () => {
   // Theme state: 'dark' | 'light'
@@ -243,6 +244,9 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      {/* Activity Carousel */}
+      <ActivityCarousel />
 
       {/* Sponsors Section */}
       <SponsorsSection theme={theme} />
