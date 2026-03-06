@@ -68,29 +68,35 @@ const LandingPage = () => {
     }
   ];
 
-  const events = [
-    {
-      id: 1,
-      title: "Annual General Meeting",
-      date: "March 15, 2026",
-      time: "7:00 PM",
-      location: "Club Pavilion"
-    },
-    {
-      id: 2,
-      title: "Charity Match",
-      date: "April 5, 2026",
-      time: "2:00 PM",
-      location: "Main Ground"
-    },
-    {
-      id: 3,
-      title: "Youth Tournament",
-      date: "April 20-22, 2026",
-      time: "All Day",
-      location: "Club Grounds"
+  const [events, setEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsError, setEventsError] = useState("");
+
+  useEffect(() => {
+    async function fetchEvents() {
+      setEventsLoading(true);
+      setEventsError("");
+      try {
+        const { getSupabaseClient } = await import("./lib/supabase");
+        const supabase = getSupabaseClient();
+        const today = new Date();
+        const { data, error } = await supabase
+          .from("events")
+          .select("id, title, date, time, location, is_active")
+          .order("date", { ascending: true });
+        if (error) throw error;
+        console.log("Fetched events from DB:", data);
+        // Show all events where is_active is true
+        const activeEvents = (data || []).filter(ev => ev.is_active);
+        setEvents(activeEvents);
+      } catch (err) {
+        setEventsError(err.message || "Could not load events.");
+      } finally {
+        setEventsLoading(false);
+      }
     }
-  ];
+    fetchEvents();
+  }, []);
 
   return (
     <div className={
@@ -231,16 +237,24 @@ const LandingPage = () => {
             <p className={theme === 'dark' ? 'text-gray-300 text-lg' : 'text-gray-600 text-lg'}>{t[lang].eventsDesc}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            {events.map((event) => (
-              <div key={event.id} className={theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-6 border border-gray-700' : 'bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6 border border-gray-200'}>
-                <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{event.title}</h4>
-                <div className={theme === 'dark' ? 'space-y-1 text-gray-300' : 'space-y-1 text-gray-600'}>
-                  <p><span className="font-medium">Date:</span> {event.date}</p>
-                  <p><span className="font-medium">Time:</span> {event.time}</p>
-                  <p><span className="font-medium">Location:</span> {event.location}</p>
+            {eventsLoading ? (
+              <div className="col-span-3 text-center text-slate-400">Loading events...</div>
+            ) : eventsError ? (
+              <div className="col-span-3 text-center text-rose-400">{eventsError}</div>
+            ) : events.length === 0 ? (
+              <div className="col-span-3 text-center text-slate-400">No upcoming events.</div>
+            ) : (
+              events.map((event) => (
+                <div key={event.id} className={theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-6 border border-gray-700' : 'bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6 border border-gray-200'}>
+                  <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{event.title}</h4>
+                  <div className={theme === 'dark' ? 'space-y-1 text-gray-300' : 'space-y-1 text-gray-600'}>
+                    <p><span className="font-medium">Date:</span> {event.date}</p>
+                    <p><span className="font-medium">Time:</span> {event.time}</p>
+                    <p><span className="font-medium">Location:</span> {event.location}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>

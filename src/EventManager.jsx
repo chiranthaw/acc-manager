@@ -37,6 +37,7 @@ export default function EventManager() {
   }, []);
 
   async function fetchEvents() {
+    console.log('Fetching events...');
     setLoading(true);
     setError('');
     const supabase = getSupabaseClient();
