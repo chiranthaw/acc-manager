@@ -972,10 +972,26 @@ function AdminPortalApp() {
                   <button
                     type="button"
                     onClick={openEmailModal}
-                    className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
+                    className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
                   >
                     Send Payment Reminder
                   </button>
+                </div>
+                {/* New Manage Events section */}
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white mb-2">Manage Events</h2>
+                      <p className="mb-3 text-sm text-slate-400">Add, edit, activate/deactivate, or delete club events and matches.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('events')}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                    >
+                      Manage Events
+                    </button>
+                  </div>
                 </div>
               </div>
             </>

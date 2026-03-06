@@ -1,3 +1,51 @@
+-- Events table for matches, training, school, and other events
+create table if not exists public.events (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  event_type text not null check (event_type in ('match', 'training', 'school', 'social', 'other')),
+  date date not null,
+  time time,
+  location text,
+  image_url text,
+  is_active boolean not null default true,
+  extra jsonb,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.events enable row level security;
+
+-- Policies for events table
+drop policy if exists "events_select_authenticated" on public.events;
+create policy "events_select_authenticated"
+on public.events
+for select
+to authenticated
+using (true);
+
+drop policy if exists "events_insert_authenticated" on public.events;
+create policy "events_insert_authenticated"
+on public.events
+for insert
+to authenticated
+with check (true);
+
+drop policy if exists "events_update_authenticated" on public.events;
+create policy "events_update_authenticated"
+on public.events
+for update
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "events_delete_authenticated" on public.events;
+create policy "events_delete_authenticated"
+on public.events
+for delete
+to authenticated
+using (true);
 create extension if not exists pgcrypto;
 
 create table if not exists public.players (
