@@ -1160,6 +1160,86 @@ function AdminPortalApp() {
             </>
           )}
         </section>
+
+        {/* Payment Reminder Modal */}
+        {isEmailModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="w-full max-w-lg rounded-xl bg-slate-900 p-6 shadow-2xl border border-slate-700 relative">
+              <h2 className="text-lg font-semibold text-white mb-2">Send Payment Reminder</h2>
+              <p className="mb-3 text-sm text-slate-400">Send a payment reminder email to selected unpaid players.</p>
+              {emailError && (
+                <p className="mb-2 rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{emailError}</p>
+              )}
+              {emailMessage && (
+                <p className="mb-2 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">{emailMessage}</p>
+              )}
+              <form
+                onSubmit={e => { e.preventDefault(); handleSendEmails(); }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-1">Subject</label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={e => setEmailSubject(e.target.value)}
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-1">Body</label>
+                  <textarea
+                    value={emailBody}
+                    onChange={e => setEmailBody(e.target.value)}
+                    rows={6}
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-1">Select Players</label>
+                  <div className="max-h-40 overflow-y-auto rounded border border-slate-700 bg-slate-950 p-2">
+                    {unpaidPlayers.length === 0 ? (
+                      <p className="text-sm text-slate-400">No unpaid players with email found.</p>
+                    ) : (
+                      unpaidPlayers.map(player => (
+                        <label key={player.id} className="flex items-center gap-2 py-1 text-slate-100 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={selectedPlayersForEmail.has(player.id)}
+                            onChange={e => {
+                              const updated = new Set(selectedPlayersForEmail);
+                              if (e.target.checked) updated.add(player.id);
+                              else updated.delete(player.id);
+                              setSelectedPlayersForEmail(updated);
+                            }}
+                          />
+                          {player.fullName} <span className="ml-2 text-xs text-slate-400">({player.email})</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsEmailModalOpen(false)}
+                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+                    disabled={emailLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:opacity-60"
+                    disabled={emailLoading}
+                  >
+                    {emailLoading ? 'Sending...' : 'Send Email'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     );
   }
