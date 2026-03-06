@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { getSupabaseClient, isSupabaseConfigured } from './lib/supabase';
 import logoImg from './images/acc-logo-new.png';
 import LandingPage from './LandingPage';
+import EventManager from './EventManager';
 
 const MEMBERSHIP_OPTIONS = [
   { value: 'full', label: 'Full membership' },
@@ -959,7 +960,7 @@ function AdminPortalApp() {
             </table>
           </div>
             </>
-          ) : (
+          ) : currentView === 'admin' ? (
             <>
               <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -995,484 +996,168 @@ function AdminPortalApp() {
                 </div>
               </div>
             </>
+          ) : currentView === 'events' ? (
+            <EventManager />
+          ) : (
+            <>
+              <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h1 className="text-xl font-semibold text-white">Players</h1>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Register players and manage membership and payment status for{' '}
+                      {selectedYear}.
+                    </p>
+                  </div>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <input
+                  type="text"
+                  value={playerSearch}
+                  onChange={(event) => setPlayerSearch(event.target.value)}
+                  placeholder="Search players..."
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400 sm:w-64"
+                />
+                <button
+                  type="button"
+                  onClick={openAddPlayerModal}
+                  className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
+                >
+                  Add player
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {dashboardError && (
+            <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+              {dashboardError}
+            </p>
           )}
 
-          {isPlayerModalOpen && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
-              <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">
-                    {playerModalMode === 'add' ? 'Add player' : 'Edit player'}
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!savingPlayer) {
-                        setIsPlayerModalOpen(false);
-                      }
-                    }}
-                    className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:text-white"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <form onSubmit={handleSavePlayer} className="mt-4 space-y-4">
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-name"
+          <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
+            <table className="min-w-full divide-y divide-slate-800">
+              <thead className="bg-slate-900/80">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+                    Player
+                  </th>
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">
+                    Email
+                  </th>
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">
+                    Team
+                  </th>
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">
+                    Membership ({selectedYear})
+                  </th>
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">
+                    Amount ({selectedYear})
+                  </th>
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">
+                    Payment progress ({selectedYear})
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {dashboardLoading ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-5 text-sm text-slate-400"
                     >
-                      Player name
-                    </label>
-                    <input
-                      id="new-player-name"
-                      value={newPlayerName}
-                      onChange={(event) => setNewPlayerName(event.target.value)}
-                      placeholder="Player full name"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-email"
+                      Loading players...
+                    </td>
+                  </tr>
+                ) : filteredPlayers.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-5 text-sm text-slate-400"
                     >
-                      Email (optional)
-                    </label>
-                    <input
-                      id="new-player-email"
-                      type="email"
-                      value={newPlayerEmail}
-                      onChange={(e) => setNewPlayerEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-phone"
-                    >
-                      Phone (optional)
-                    </label>
-                    <input
-                      id="new-player-phone"
-                      type="tel"
-                      value={newPlayerPhone}
-                      onChange={(e) => setNewPlayerPhone(e.target.value)}
-                      placeholder="+45 25 47 85 44"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-address"
-                    >
-                      Address (optional)
-                    </label>
-                    <textarea
-                      id="new-player-address"
-                      value={newPlayerAddress}
-                      onChange={(e) => setNewPlayerAddress(e.target.value)}
-                      placeholder="Street, City, State ZIP"
-                      rows={2}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-team"
-                    >
-                      Main team
-                    </label>
-                    <select
-                      id="new-player-team"
-                      value={newPlayerTeam}
-                      onChange={(event) => setNewPlayerTeam(event.target.value)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    >
-                      {TEAM_OPTIONS.map((option) => (
-                        <option
-                          key={`team-${option.value}`}
-                          value={option.value}
-                        >
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label
-                        className="mb-1.5 block text-sm text-slate-300"
-                        htmlFor="new-player-year"
-                      >
-                        Year
-                      </label>
-                      <select
-                        id="new-player-year"
-                        value={newPlayerYear}
-                        onChange={(event) =>
-                          setNewPlayerYear(Number(event.target.value))
-                        }
-                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                      >
-                        {yearOptions.map((year) => (
-                          <option key={`add-${year}`} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        className="mb-1.5 block text-sm text-slate-300"
-                        htmlFor="new-player-membership"
-                      >
-                        Membership
-                      </label>
-                      <select
-                        id="new-player-membership"
-                        value={newPlayerMembership}
-                        onChange={(event) =>
-                          setNewPlayerMembership(event.target.value)
-                        }
-                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                      >
-                        {MEMBERSHIP_OPTIONS.map((option) => (
-                          <option
-                            key={`new-${option.value}`}
-                            value={option.value}
+                      No players found for this search.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPlayers.map((player) => (
+                    <tr key={player.id}>
+                      <td className="px-4 py-3 text-sm text-slate-100">
+                        {player.fullName}
+                      </td>
+                      <td className="hidden px-4 py-3 sm:table-cell">
+                        <p className="text-sm text-slate-200">
+                          {player.email || '—'}
+                        </p>
+                      </td>
+                      <td className="hidden px-4 py-3 sm:table-cell">
+                        <p className="text-sm text-slate-200">
+                          {TEAM_OPTIONS.find(
+                            (option) => option.value === player.team,
+                          )?.label || '1st team'}
+                        </p>
+                      </td>
+                      <td className="hidden px-4 py-3 sm:table-cell">
+                        <p className="text-sm text-slate-200">
+                          {MEMBERSHIP_OPTIONS.find(
+                            (option) => option.value === player.membershipType,
+                          )?.label || player.membershipType}
+                        </p>
+                      </td>
+                      <td className="hidden px-4 py-3 sm:table-cell">
+                        <p className="text-sm text-slate-200">
+                          {Math.round(player.amountDue)}
+                        </p>
+                      </td>
+                      <td className="hidden px-4 py-3 sm:table-cell">
+                        <div className="space-y-1">
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                            <div
+                              className="h-full rounded-full bg-emerald-500"
+                              style={{
+                                width: `${getProgress(player.amountPaid, player.amountDue)}%`,
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-slate-300">
+                            {Math.round(player.amountPaid)} /{' '}
+                            {Math.round(player.amountDue)} (
+                            {Math.round(
+                              getProgress(player.amountPaid, player.amountDue),
+                            )}
+                            %)
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditPlayerModal(player)}
+                            className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500 hover:text-white"
                           >
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        className="mb-1.5 block text-sm text-slate-300"
-                        htmlFor="new-player-paid"
-                      >
-                        Amount paid (installments total)
-                      </label>
-                      <input
-                        id="new-player-paid"
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={newPlayerPaid}
-                        onChange={(event) =>
-                          setNewPlayerPaid(event.target.value)
-                        }
-                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-amount"
-                    >
-                      Amount to be paid
-                    </label>
-                    <input
-                      id="new-player-amount"
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={newPlayerAmount}
-                      onChange={(event) =>
-                        setNewPlayerAmount(event.target.value)
-                      }
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsPlayerModalOpen(false)}
-                      disabled={savingPlayer}
-                      className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500 hover:text-white disabled:opacity-60"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={savingPlayer || !newPlayerName.trim()}
-                      className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {savingPlayer
-                        ? 'Saving...'
-                        : playerModalMode === 'add'
-                          ? 'Save player'
-                          : 'Save changes'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {isProfileModalOpen && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
-              <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">
-                    Edit profile
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!profileLoading) setIsProfileModalOpen(false);
-                    }}
-                    className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:text-white"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSaveProfile();
-                  }}
-                  className="mt-4 space-y-4"
-                >
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="profile-full-name"
-                    >
-                      Full name
-                    </label>
-                    <input
-                      id="profile-full-name"
-                      type="text"
-                      required
-                      value={profileFullName}
-                      onChange={(e) => setProfileFullName(e.target.value)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="profile-email"
-                    >
-                      Email
-                    </label>
-                    <input
-                      id="profile-email"
-                      type="email"
-                      value={profileEmail}
-                      disabled
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3.5 py-2.5 text-sm text-slate-400 outline-none"
-                    />
-                  </div>
-
-                  {profileError && (
-                    <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-                      {profileError}
-                    </p>
-                  )}
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsProfileModalOpen(false)}
-                      disabled={profileLoading}
-                      className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500 hover:text-white disabled:opacity-60"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={profileLoading}
-                      className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {profileLoading ? 'Saving...' : 'Save changes'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {isEmailModalOpen && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
-              <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">
-                    Send Payment Reminder
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!emailLoading) setIsEmailModalOpen(false);
-                    }}
-                    className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:text-white"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSendEmails();
-                  }}
-                  className="mt-4 space-y-4"
-                >
-                  <div>
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <label className="text-sm text-slate-300">
-                        Unpaid Players ({selectedPlayersForEmail.size} selected)
-                      </label>
-                      <div className="space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedPlayersForEmail(
-                              new Set(unpaidPlayers.map((p) => p.id)),
-                            );
-                          }}
-                          className="text-xs text-indigo-400 hover:text-indigo-300"
-                        >
-                          Select All
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedPlayersForEmail(new Set());
-                          }}
-                          className="text-xs text-slate-400 hover:text-slate-300"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                    </div>
-                    {unpaidLoadingError && (
-                      <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-                        {unpaidLoadingError}
-                      </p>
-                    )}
-                    {unpaidPlayers.length > 0 && (
-                      <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-700 bg-slate-950 p-3">
-                        <ul className="space-y-2">
-                          {unpaidPlayers.map((player) => (
-                            <li key={player.id} className="flex items-start">
-                              <input
-                                type="checkbox"
-                                id={`player-${player.id}`}
-                                checked={selectedPlayersForEmail.has(player.id)}
-                                onChange={(e) => {
-                                  const newSelected = new Set(
-                                    selectedPlayersForEmail,
-                                  );
-                                  if (e.target.checked) {
-                                    newSelected.add(player.id);
-                                  } else {
-                                    newSelected.delete(player.id);
-                                  }
-                                  setSelectedPlayersForEmail(newSelected);
-                                }}
-                                className="mt-0.5 mr-2 cursor-pointer rounded border-slate-600 accent-indigo-500"
-                              />
-                              <label
-                                htmlFor={`player-${player.id}`}
-                                className="text-xs text-slate-300 cursor-pointer flex-1"
-                              >
-                                {player.fullName} - {player.email}
-                              </label>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="email-subject"
-                    >
-                      Email Subject
-                    </label>
-                    <input
-                      id="email-subject"
-                      type="text"
-                      required
-                      value={emailSubject}
-                      onChange={(e) => setEmailSubject(e.target.value)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="email-body"
-                    >
-                      Email Body
-                    </label>
-                    <textarea
-                      id="email-body"
-                      required
-                      value={emailBody}
-                      onChange={(e) => setEmailBody(e.target.value)}
-                      rows={5}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-
-                  {emailError && (
-                    <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-                      {emailError}
-                    </p>
-                  )}
-
-                  {emailMessage && (
-                    <p className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-                      {emailMessage}
-                    </p>
-                  )}
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsEmailModalOpen(false)}
-                      disabled={emailLoading}
-                      className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500 hover:text-white disabled:opacity-60"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={emailLoading || selectedPlayersForEmail.size === 0}
-                      className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {emailLoading
-                        ? 'Sending...'
-                        : `Send Emails (${selectedPlayersForEmail.size})`}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePlayer(player)}
+                            disabled={deletingPlayerId === player.id}
+                            className="rounded-lg border border-rose-600/60 px-3 py-1.5 text-sm text-rose-200 transition hover:border-rose-500 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {deletingPlayerId === player.id
+                              ? 'Deleting...'
+                              : 'Delete'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+            </>
           )}
         </section>
       </main>
