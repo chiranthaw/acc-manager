@@ -101,41 +101,53 @@ export default function EventManager() {
       {loading ? (
         <div className="text-slate-300">Loading events...</div>
       ) : (
-        <table className="min-w-full divide-y divide-slate-800 bg-slate-900 rounded-xl">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Title</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Type</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Date</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Active</th>
-              <th className="px-4 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map(ev => (
-              <tr key={ev.id} className="border-b border-slate-800">
-                <td className="px-4 py-2 text-slate-100">{ev.title}</td>
-                <td className="px-4 py-2 text-slate-100">{ev.event_type}</td>
-                <td className="px-4 py-2 text-slate-100">{ev.date}</td>
-                <td className="px-4 py-2 text-slate-100">{ev.is_active ? 'Yes' : 'No'}</td>
-                <td className="px-4 py-2 flex gap-2">
-                  <button
-                    onClick={() => openEditModal(ev)}
-                    className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-200 transition hover:border-slate-500 hover:text-white"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(ev.id)}
-                    className="rounded-lg border border-rose-600/60 px-3 py-1.5 text-xs text-rose-200 transition hover:border-rose-500 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Delete
-                  </button>
-                </td>
+        <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900 max-w-5xl w-full mx-auto">
+          <table className="min-w-full divide-y divide-slate-800">
+            <thead className="bg-slate-900/80">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Title</th>
+                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Type</th>
+                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Date</th>
+                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Location</th>
+                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Active</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {events.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-5 text-sm text-slate-400">No events found.</td>
+                </tr>
+              ) : (
+                events.map(ev => (
+                  <tr key={ev.id}>
+                    <td className="px-4 py-3 text-sm text-slate-100">{ev.title}</td>
+                    <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{ev.event_type}</td>
+                    <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{ev.date}</td>
+                    <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{ev.location || '—'}</td>
+                    <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{ev.is_active ? 'Yes' : 'No'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openEditModal(ev)}
+                          className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-200 transition hover:border-slate-500 hover:text-white"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(ev.id)}
+                          className="rounded-lg border border-rose-600/60 px-3 py-1.5 text-xs text-rose-200 transition hover:border-rose-500 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
