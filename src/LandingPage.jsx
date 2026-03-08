@@ -119,7 +119,7 @@ const LandingPage = () => {
       `min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 text-white' : 'bg-gradient-to-br from-green-50 to-blue-50 text-gray-900'}`
     }>
       {/* Header */}
-      <header className={`shadow-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
+      <header className={`sticky top-0 z-30 shadow-lg backdrop-blur-md bg-opacity-90 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}> 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
