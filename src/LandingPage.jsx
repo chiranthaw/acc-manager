@@ -1,7 +1,8 @@
-
+import badtImg from './images/badt.jpg';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import logoImg from './images/acc-logo-new.png';
+import holdetImg from './images/holdet.jpg';
 import translations from './lang';
 import ContactSection from './ContactSection';
 import SponsorsSection from './SponsorsSection';
@@ -194,11 +195,39 @@ const LandingPage = () => {
 
       {/* About Section */}
       <section id="about" className={theme === 'dark' ? 'py-16 bg-gray-900' : 'py-16 bg-white'}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h3 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t[lang].aboutTitle}</h3>
-            <p className={`text-lg max-w-3xl mx-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{t[lang].aboutText}</p>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-xl p-10 border border-green-900/40' : 'bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-xl p-10 border border-green-200/60'}>
+            <div className="flex flex-col md:flex-row gap-10 items-start justify-between">
+              {/* About Our Club */}
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col items-center mb-6 md:mb-8">
+                  <img
+                    src={holdetImg}
+                    alt="Aalborg Cricket Club Team"
+                    className="w-full max-w-md rounded-xl shadow-lg mb-4 object-cover"
+                    style={{ aspectRatio: '4/3' }}
+                  />
+                  <h3 className={`text-2xl md:text-3xl font-bold mb-2 tracking-tight text-center ${theme === 'dark' ? 'text-white' : 'text-green-900'}`}>{t[lang].aboutTitle}</h3>
+                </div>
+                <p className={`text-base md:text-lg mb-4 md:mb-0 text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t[lang].aboutText}</p>
+              </div>
+              {/* Divider for large screens */}
+              <div className="hidden md:block w-px bg-green-300 dark:bg-green-900 mx-2 self-stretch"></div>
+              {/* Cricket History */}
+              <div className="flex-1 min-w-0">
+                <img
+                  src={badtImg}
+                  alt="Aalborg Cricket History"
+                  className="w-full max-w-md rounded-xl shadow-lg mb-4 object-cover mx-auto"
+                  style={{ aspectRatio: '4/3' }}
+                />
+                <h3 className={`text-2xl md:text-3xl font-bold mb-2 tracking-tight text-center ${theme === 'dark' ? 'text-white' : 'text-green-900'}`}>{t[lang].aboutHistoryTitle}</h3>
+                <p className={`text-base md:text-lg mb-4 md:mb-0 text-center whitespace-pre-line ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t[lang].aboutHistoryText}</p>
+              </div>
+            </div>
           </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className={theme === 'dark' ? 'bg-green-900 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4' : 'bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4'}>
@@ -358,3 +387,11 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
+
+// About text for Aalborg Cricket Club (Danish and English)
+// Danish:
+// Siden 2013 har Aalborg Cricket Club befundet sig i det nye arealer på Dyrskuepladsen. Deltagelsen i 2. Division Nord har været et stor succes og med mange cricket sejr til klubben, hvor man blandt andet stillede med 2 hold. I 2015 fik klubben mulighed for at prøve kræfter med hold i 1. Division og den mulighed valgte klubben at tage. En af grunde var, at der skulle være lidt mere udfordring for de aktive spiller fra Aalborg.
+// Man valgte ligeledes i 2015 at stille med kun 1 aktivt hold under DCF. Truppen og bestyrelsen består mest af nye spiller samt spiller fra Chang tiden. Klubben har haft fornøjelsen af tidligere spiller, som har hjulpet i tilfælde af klubben ikke kunne stille hold. Aalborg er 2. mest vindende by i Danmark gennem tiderne. 17 Senior DM guld er det blevet til. Aab 16 mesterskaber & Chang 1.
+// English:
+// Since 2013, Aalborg Cricket Club has been located at the new grounds at Dyrskuepladsen. Participation in the 2nd Division North has been a great success, with many cricket victories for the club, including fielding two teams. In 2015, the club had the opportunity to compete in the 1st Division, a challenge they chose to accept. One reason was to provide more challenge for the active players from Aalborg.
+// In 2015, the club also decided to field only one active team under DCF. The squad and board mainly consist of new players as well as players from the Chang era. The club has enjoyed the help of former players, who have stepped in when the club could not field a team. Aalborg is the second most winning city in Denmark throughout history, with 17 Senior Danish Championships: Aab with 16 titles & Chang with 1.
