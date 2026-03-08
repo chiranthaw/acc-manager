@@ -2,6 +2,7 @@ import badtImg from './images/badt.jpg';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import logoImg from './images/acc-logo-new.png';
+import heroBg from './images/acc1.jpg';
 import holdetImg from './images/holdet.jpg';
 import translations from './lang';
 import ContactSection from './ContactSection';
@@ -166,8 +167,20 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className={`bg-gradient-to-r ${theme === 'dark' ? 'from-green-900 to-blue-900 text-white' : 'from-green-600 to-blue-600 text-white'} py-20`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section
+        className={`relative ${theme === 'dark' ? 'text-white' : 'text-white'} overflow-hidden`}
+        style={{
+          backgroundImage: `linear-gradient(rgba(16, 52, 30, 0.7), rgba(16, 52, 30, 0.7)), url(${heroBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 20%',
+          minHeight: '520px',
+          height: '44vh',
+          maxHeight: '700px',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-24 md:py-32">
           <h2 className="text-4xl md:text-6xl font-bold mb-6">
             {t[lang].welcome}
           </h2>
