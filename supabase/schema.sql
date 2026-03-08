@@ -1,3 +1,48 @@
+-- News table for club news items
+create table if not exists public.news (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  summary text,
+  content text,
+  image_url text,
+  date date not null default now(),
+  is_active boolean not null default true,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.news enable row level security;
+
+-- Policies for news table
+drop policy if exists "news_select_authenticated" on public.news;
+create policy "news_select_authenticated"
+on public.news
+for select
+to authenticated
+using (true);
+
+drop policy if exists "news_insert_authenticated" on public.news;
+create policy "news_insert_authenticated"
+on public.news
+for insert
+to authenticated
+with check (true);
+
+drop policy if exists "news_update_authenticated" on public.news;
+create policy "news_update_authenticated"
+on public.news
+for update
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "news_delete_authenticated" on public.news;
+create policy "news_delete_authenticated"
+on public.news
+for delete
+to authenticated
+using (true);
 -- Events table for matches, training, school, and other events
 create table if not exists public.events (
   id uuid primary key default gen_random_uuid(),
