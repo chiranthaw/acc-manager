@@ -71,6 +71,21 @@ const LandingPage = () => {
   const [events, setEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [eventsError, setEventsError] = useState("");
+  // Carousel state for events
+  const [eventStartIdx, setEventStartIdx] = useState(0);
+
+  // Helper to show only 3 most recent events (by date desc)
+  const sortedEvents = [...events].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const visibleEvents = sortedEvents.slice(eventStartIdx, eventStartIdx + 3);
+
+  const canGoPrev = eventStartIdx > 0;
+  const canGoNext = eventStartIdx + 3 < sortedEvents.length;
+  const handlePrev = () => {
+    if (canGoPrev) setEventStartIdx(eventStartIdx - 1);
+  };
+  const handleNext = () => {
+    if (canGoNext) setEventStartIdx(eventStartIdx + 1);
+  };
 
   useEffect(() => {
     async function fetchEvents() {
@@ -82,7 +97,7 @@ const LandingPage = () => {
         const today = new Date();
         const { data, error } = await supabase
           .from("events")
-          .select("id, title, date, time, location, is_active")
+          .select("id, title, date, time, location, is_active, event_type")
           .order("date", { ascending: true });
         if (error) throw error;
         console.log("Fetched events from DB:", data);
@@ -244,16 +259,80 @@ const LandingPage = () => {
             ) : events.length === 0 ? (
               <div className="col-span-3 text-center text-slate-400">No upcoming events.</div>
             ) : (
-              events.map((event) => (
-                <div key={event.id} className={theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-6 border border-gray-700' : 'bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6 border border-gray-200'}>
-                  <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{event.title}</h4>
-                  <div className={theme === 'dark' ? 'space-y-1 text-gray-300' : 'space-y-1 text-gray-600'}>
-                    <p><span className="font-medium">Date:</span> {event.date}</p>
-                    <p><span className="font-medium">Time:</span> {event.time}</p>
-                    <p><span className="font-medium">Location:</span> {event.location}</p>
+              <>
+                <div className="col-span-3 flex items-center justify-center">
+                  {/* Left arrow */}
+                  <button
+                    onClick={handlePrev}
+                    disabled={!canGoPrev}
+                    className={`group p-3 mr-4 rounded-full border-2 shadow-lg bg-white dark:bg-gray-800 border-green-400 dark:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all duration-200 flex items-center justify-center ${canGoPrev ? 'hover:bg-green-100 dark:hover:bg-gray-700' : 'opacity-40 cursor-not-allowed'}`}
+                    aria-label="Previous events"
+                    style={{ alignSelf: 'center' }}
+                  >
+                    {/* Left chevron SVG */}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-7 h-7 text-green-600 dark:text-green-300 group-hover:text-green-800 dark:group-hover:text-green-200">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                  </button>
+                  {/* Events cards grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1">
+                    {visibleEvents.map((event) => {
+                      // Icon selection based on event_type
+                      let icon = '📅';
+                      switch ((event.event_type || '').toLowerCase()) {
+                        case 'match':
+                          icon = '🏏';
+                          break;
+                        case 'training':
+                          icon = '💪';
+                          break;
+                        case 'school':
+                          icon = '🎓';
+                          break;
+                        case 'social':
+                          icon = '🎉';
+                          break;
+                        case 'other':
+                          icon = '📌';
+                          break;
+                        default:
+                          icon = '📅';
+                      }
+                      return (
+                        <div key={event.id} className={theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-6 border border-gray-700' : 'bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6 border border-gray-200'}>
+                          <div className="flex items-center mb-2">
+                            <span className="text-3xl mr-3">{icon}</span>
+                            <h4 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{event.title}</h4>
+                          </div>
+                          <div className={theme === 'dark' ? 'space-y-1 text-gray-300' : 'space-y-1 text-gray-600'}>
+                            <p><span className="font-medium">Date:</span> {event.date}</p>
+                            <p><span className="font-medium">Time:</span> {event.time}</p>
+                            <p><span className="font-medium">Location:</span> {event.location}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
+                  {/* Right arrow */}
+                  <button
+                    onClick={handleNext}
+                    disabled={!canGoNext}
+                    className={`group p-3 ml-4 rounded-full border-2 shadow-lg bg-white dark:bg-gray-800 border-green-400 dark:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all duration-200 flex items-center justify-center ${canGoNext ? 'hover:bg-green-100 dark:hover:bg-gray-700' : 'opacity-40 cursor-not-allowed'}`}
+                    aria-label="Next events"
+                    style={{ alignSelf: 'center' }}
+                  >
+                    {/* Right chevron SVG */}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-7 h-7 text-green-600 dark:text-green-300 group-hover:text-green-800 dark:group-hover:text-green-200">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </button>
                 </div>
-              ))
+                <div className="col-span-3 text-center mt-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Showing {eventStartIdx + 1}-{Math.min(eventStartIdx + 3, sortedEvents.length)} of {sortedEvents.length} events
+                  </span>
+                </div>
+              </>
             )}
           </div>
         </div>
