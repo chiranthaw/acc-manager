@@ -5,6 +5,7 @@ import logoImg from './images/acc-logo-new.png';
 import LandingPage from './LandingPage';
 import EventManager from './EventManager';
 import NewsManager from './NewsManager';
+import NewsDetail from './NewsDetail';
 
 const MEMBERSHIP_OPTIONS = [
   { value: 'full', label: 'Full membership' },
@@ -1437,11 +1438,13 @@ function AdminPortalApp() {
   );
 }
 
+
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/admin/*" element={<AdminPortalApp />} />
+        <Route path="/news/:id" element={<NewsDetail />} />
         <Route path="/*" element={<LandingPage />} />
       </Routes>
     </Router>

@@ -12,6 +12,7 @@ function NewsManager() {
     title: '',
     summary: '',
     content: '',
+    image_url: '',
     date: '',
     is_active: true,
   });
@@ -42,7 +43,7 @@ function NewsManager() {
 
   const openAddModal = () => {
     setModalMode('add');
-    setForm({ title: '', summary: '', content: '', date: '', is_active: true });
+    setForm({ title: '', summary: '', content: '', image_url: '', date: '', is_active: true });
     setIsModalOpen(true);
     setEditingNews(null);
   };
@@ -50,10 +51,11 @@ function NewsManager() {
   const openEditModal = (item) => {
     setModalMode('edit');
     setForm({
-      title: item.title,
-      summary: item.summary,
-      content: item.content,
-      date: item.date,
+      title: item.title || '',
+      summary: item.summary || '',
+      content: item.content || '',
+      image_url: item.image_url || '',
+      date: item.date || '',
       is_active: item.is_active,
     });
     setEditingNews(item);
@@ -70,13 +72,28 @@ function NewsManager() {
 
   const handleSave = async () => {
     try {
+      const now = new Date().toISOString();
       if (modalMode === 'add') {
-        const { error } = await supabase.from('news').insert([{ ...form }]);
+        // Get current user id for created_by
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        const userId = userData?.user?.id || null;
+        const insertData = {
+          ...form,
+          created_by: userId,
+          created_at: now,
+          updated_at: now,
+        };
+        const { error } = await supabase.from('news').insert([insertData]);
         if (error) throw error;
       } else if (modalMode === 'edit' && editingNews) {
+        const updateData = {
+          ...form,
+          updated_at: now,
+        };
         const { error } = await supabase
           .from('news')
-          .update({ ...form })
+          .update(updateData)
           .eq('id', editingNews.id);
         if (error) throw error;
       }
@@ -138,10 +155,17 @@ function NewsManager() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-slate-900 rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold text-white mb-4">{modalMode === 'add' ? 'Add News' : 'Edit News'}</h2>
+            {/* Show image preview if present */}
+            {form.image_url && (
+              <div className="mb-3 flex justify-center">
+                <img src={form.image_url} alt="News" className="max-h-48 rounded shadow" style={{objectFit:'contain'}} />
+              </div>
+            )}
             <div className="space-y-3">
               <input name="title" value={form.title} onChange={handleFormChange} placeholder="Title" className="w-full px-3 py-2 rounded bg-slate-800 text-white" />
               <input name="summary" value={form.summary} onChange={handleFormChange} placeholder="Summary" className="w-full px-3 py-2 rounded bg-slate-800 text-white" />
               <textarea name="content" value={form.content} onChange={handleFormChange} placeholder="Content" className="w-full px-3 py-2 rounded bg-slate-800 text-white" rows={4} />
+              <input name="image_url" value={form.image_url} onChange={handleFormChange} placeholder="Image URL (optional)" className="w-full px-3 py-2 rounded bg-slate-800 text-white" />
               <input name="date" type="date" value={form.date} onChange={handleFormChange} className="w-full px-3 py-2 rounded bg-slate-800 text-white" />
               <label className="flex items-center gap-2 text-white">
                 <input name="is_active" type="checkbox" checked={form.is_active} onChange={handleFormChange} /> Active

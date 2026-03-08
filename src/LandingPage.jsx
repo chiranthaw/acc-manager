@@ -49,26 +49,33 @@ const LandingPage = () => {
 
   // Use imported translations
   const t = translations;
-  const news = [
-    {
-      id: 1,
-      title: "Season Opener Victory",
-      date: "March 1, 2026",
-      summary: "Our first team kicked off the season with a thrilling win against rivals."
-    },
-    {
-      id: 2,
-      title: "New Training Facilities",
-      date: "February 15, 2026",
-      summary: "Exciting updates on our upgraded training grounds and equipment."
-    },
-    {
-      id: 3,
-      title: "Junior Program Expansion",
-      date: "January 20, 2026",
-      summary: "We're expanding our junior cricket program to welcome more young players."
+  const [news, setNews] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [newsError, setNewsError] = useState("");
+  const [selectedNews, setSelectedNews] = useState(null);
+  useEffect(() => {
+    async function fetchNews() {
+      setNewsLoading(true);
+      setNewsError("");
+      try {
+        const { getSupabaseClient } = await import("./lib/supabase");
+        const supabase = getSupabaseClient();
+        const { data, error } = await supabase
+          .from("news")
+          .select("id, title, summary, content, date, is_active, image_url")
+          .order("date", { ascending: false });
+        if (error) throw error;
+        // Only show active news
+        const activeNews = (data || []).filter(n => n.is_active);
+        setNews(activeNews);
+      } catch (err) {
+        setNewsError(err.message || "Could not load news.");
+      } finally {
+        setNewsLoading(false);
+      }
     }
-  ];
+    fetchNews();
+  }, []);
 
   const [events, setEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(true);
@@ -275,13 +282,26 @@ const LandingPage = () => {
             <p className={theme === 'dark' ? 'text-gray-300 text-lg' : 'text-gray-600 text-lg'}>{t[lang].newsDesc}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            {news.map((item) => (
-              <div key={item.id} className={theme === 'dark' ? 'bg-gray-900 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow' : 'bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow'}>
-                <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{item.title}</h4>
-                <p className={theme === 'dark' ? 'text-gray-400 text-sm mb-3' : 'text-gray-500 text-sm mb-3'}>{item.date}</p>
-                <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{item.summary}</p>
-              </div>
-            ))}
+            {newsLoading ? (
+              <div className="col-span-3 text-center text-slate-400">Loading news...</div>
+            ) : newsError ? (
+              <div className="col-span-3 text-center text-rose-400">{newsError}</div>
+            ) : news.length === 0 ? (
+              <div className="col-span-3 text-center text-slate-400">No news available.</div>
+            ) : (
+              news.map((item) => (
+                <Link
+                  to={`/news/${item.id}`}
+                  key={item.id}
+                  className={theme === 'dark' ? 'bg-gray-900 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer block' : 'bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer block'}
+                  aria-label={`Read more about ${item.title}`}
+                >
+                  <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{item.title}</h4>
+                  <p className={theme === 'dark' ? 'text-gray-400 text-sm mb-3' : 'text-gray-500 text-sm mb-3'}>{item.date}</p>
+                  <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{item.summary}</p>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </section>
