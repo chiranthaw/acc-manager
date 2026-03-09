@@ -7,10 +7,14 @@ import upcomingMatchesBg from './images/acc-1.png';
 import holdetImg from './images/holdet.jpg';
 import schoolCricketImg1 from './images/skolecricket.jpg';
 import schoolCricketImg2 from './images/foreningsfestival.jpg';
+import newMemberImg from './images/newmember.jpg';
+import feeImg from './images/fee.jpg';
+import activeMemberImg from './images/activemember.jpg';
 import translations from './lang';
 import ContactSection from './ContactSection';
 import SponsorsSection from './SponsorsSection';
 import ActivityCarousel from './ActivityCarousel';
+import { getSupabaseClient } from './lib/supabase';
 
 const LandingPage = () => {
   // Theme state: 'dark' | 'light'
@@ -95,6 +99,11 @@ const LandingPage = () => {
   const [eventsError, setEventsError] = useState("");
   // Carousel state for events
   const [eventStartIdx, setEventStartIdx] = useState(0);
+  // Contact form state
+  const [contactForm, setContactForm] = useState({ name: '', phone: '', message: '' });
+  const [contactFormSubmitting, setContactFormSubmitting] = useState(false);
+  const [contactFormMessage, setContactFormMessage] = useState(null);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   // Helper to show only non-match events (by date desc)
   const sortedEvents = [...events]
@@ -120,6 +129,50 @@ const LandingPage = () => {
   };
   const handleNext = () => {
     if (canGoNext) setEventStartIdx(eventStartIdx + 1);
+  };
+
+  const handleContactFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!contactForm.name.trim() || !contactForm.phone.trim() || !contactForm.message.trim()) {
+      setContactFormMessage({ type: 'error', text: t[lang].contactFormError });
+      return;
+    }
+
+    setContactFormSubmitting(true);
+    setContactFormMessage(null);
+
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        throw new Error('Supabase not configured');
+      }
+
+      const htmlContent = `
+        <p><strong>Name:</strong> ${contactForm.name}</p>
+        <p><strong>Phone:</strong> ${contactForm.phone}</p>
+        <p><strong>Message:</strong></p>
+        <p>${contactForm.message.replace(/\n/g, '<br>')}</p>
+      `;
+
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: 'm.chirantha@gmail.com',
+          subject: `New Membership Inquiry from ${contactForm.name}`,
+          html: htmlContent,
+        },
+      });
+
+      if (error) throw error;
+
+      setContactFormMessage({ type: 'success', text: t[lang].contactFormSuccess });
+      setContactForm({ name: '', phone: '', message: '' });
+      setTimeout(() => setShowContactModal(false), 2000);
+    } catch (err) {
+      setContactFormMessage({ type: 'error', text: t[lang].contactFormError });
+      console.error('Error sending message:', err);
+    } finally {
+      setContactFormSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -169,7 +222,34 @@ const LandingPage = () => {
               <a href="#matches" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].matches}</a>
               <a href="#events" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].events}</a>
               <a href="#sponsors" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>Sponsors</a>
-              <a href="#contact" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].contact}</a>
+              <div className="relative group">
+                <button
+                  type="button"
+                  className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}
+                >
+                  {t[lang].contact}
+                </button>
+                <div className={theme === 'dark'
+                  ? 'invisible opacity-0 group-hover:visible group-hover:opacity-100 absolute top-full left-1/2 -translate-x-1/2 mt-2 min-w-44 rounded-lg border border-slate-700 bg-slate-900 shadow-xl transition-all duration-150 z-40'
+                  : 'invisible opacity-0 group-hover:visible group-hover:opacity-100 absolute top-full left-1/2 -translate-x-1/2 mt-2 min-w-44 rounded-lg border border-slate-200 bg-white shadow-xl transition-all duration-150 z-40'}>
+                  <a
+                    href="#contact"
+                    className={theme === 'dark'
+                      ? 'block px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-800 rounded-t-lg'
+                      : 'block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 rounded-t-lg'}
+                  >
+                    {t[lang].getInTouch}
+                  </a>
+                  <a
+                    href="#become-member-section"
+                    className={theme === 'dark'
+                      ? 'block px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-800 rounded-b-lg'
+                      : 'block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 rounded-b-lg'}
+                  >
+                    {t[lang].becomeMember}
+                  </a>
+                </div>
+              </div>
             </nav>
             <div className="flex items-center gap-2">
               <button
@@ -515,6 +595,175 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      <section
+        id="become-member-section"
+        className={theme === 'dark' ? 'py-16' : 'py-16'}
+          style={{
+            backgroundImage: theme === 'dark'
+              ? `linear-gradient(rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.82)), url(${heroBg})`
+              : `linear-gradient(rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.86)), url(${heroBg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className={theme === 'dark' ? 'rounded-2xl border border-slate-700 bg-slate-900/80 p-8 shadow-2xl' : 'rounded-2xl border border-slate-200 bg-white p-8 shadow-xl'}>
+              <h3 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t[lang].becomeMember}</h3>
+              <p className={theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}>
+                {lang === 'en'
+                  ? 'Join Aalborg Cricket Club and become part of our cricket community. Create your account to get started.'
+                  : 'Bliv en del af Aalborg Cricket Klub og vores cricketfællesskab. Opret din konto for at komme i gang.'}
+              </p>
+              
+              {/* Membership Benefit */}
+              <div className="mt-6 flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-shrink-0">
+                  <img
+                    src={newMemberImg}
+                    alt="Membership"
+                    className="w-48 h-48 object-cover rounded-lg shadow-md"
+                  />
+                </div>
+                <div className={`flex-1 p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
+                  <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {t[lang].membershipBenefit}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Membership Fees */}
+              <div className="mt-6 flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-shrink-0">
+                  <img
+                    src={feeImg}
+                    alt="Membership Fees"
+                    className="w-48 h-48 object-cover rounded-lg shadow-md"
+                  />
+                </div>
+                <div className={`flex-1 p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
+                  <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {t[lang].membershipFees}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Active Member Info */}
+              <div className="mt-6 flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-shrink-0">
+                  <img
+                    src={activeMemberImg}
+                    alt="Active Member"
+                    className="w-48 h-48 object-cover rounded-lg shadow-md"
+                  />
+                </div>
+                <div className={`flex-1 p-4 rounded-lg ${theme === 'dark' ? 'bg-slate-800/60' : 'bg-slate-50'}`}>
+                  <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {t[lang].activeMemberInfo}
+                  </p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => {
+                  setShowContactModal(true);
+                  setContactForm({ name: '', phone: '', message: '' });
+                  setContactFormMessage(null);
+                }}
+                className="mt-8 w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400"
+              >
+                {t[lang].contactFormTitle}
+              </button>
+            </div>
+          </div>
+        </section>
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowContactModal(false)}>
+          <div className={`rounded-lg p-6 max-w-md w-full ${theme === 'dark' ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {t[lang].contactFormTitle}
+              </h4>
+              <button
+                onClick={() => setShowContactModal(false)}
+                className={`text-2xl leading-none transition ${theme === 'dark' ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                ×
+              </button>
+            </div>
+            
+            <form onSubmit={handleContactFormSubmit} className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                  {t[lang].contactFormName}
+                </label>
+                <input
+                  type="text"
+                  value={contactForm.name}
+                  onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                  className={`w-full px-4 py-2 rounded-lg border ${theme === 'dark'
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
+                    : 'bg-white border-slate-300 text-gray-900 placeholder-slate-500'
+                  } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+                  placeholder={t[lang].contactFormName}
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                  {t[lang].contactFormPhone}
+                </label>
+                <input
+                  type="tel"
+                  value={contactForm.phone}
+                  onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                  className={`w-full px-4 py-2 rounded-lg border ${theme === 'dark'
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
+                    : 'bg-white border-slate-300 text-gray-900 placeholder-slate-500'
+                  } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+                  placeholder={t[lang].contactFormPhone}
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                  {t[lang].contactFormMessage}
+                </label>
+                <textarea
+                  value={contactForm.message}
+                  onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                  rows="4"
+                  className={`w-full px-4 py-2 rounded-lg border ${theme === 'dark'
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
+                    : 'bg-white border-slate-300 text-gray-900 placeholder-slate-500'
+                  } focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none`}
+                  placeholder={t[lang].contactFormMessage}
+                />
+              </div>
+              
+              <button
+                type="submit"
+                disabled={contactFormSubmitting}
+                className="w-full rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {contactFormSubmitting ? 'Sending...' : t[lang].contactFormSubmit}
+              </button>
+              
+              {contactFormMessage && (
+                <div className={`p-3 rounded-lg text-sm ${
+                  contactFormMessage.type === 'success'
+                    ? theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-800'
+                    : theme === 'dark' ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-800'
+                }`}>
+                  {contactFormMessage.text}
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Activity Carousel */}
       <ActivityCarousel />

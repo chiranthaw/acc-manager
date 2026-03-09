@@ -48,9 +48,8 @@ const ContactSection = ({ lang, theme }) => {
               </div>
               <div className="flex flex-col md:flex-row md:items-center md:space-x-2 md:ml-8 mt-2 md:mt-0 justify-center">
                 <span className="font-semibold mr-2">{t[lang].followUs}</span>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors mr-2 text-2xl" aria-label="Facebook"><FaFacebook /></a>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors mr-2 text-2xl" aria-label="Instagram"><FaInstagram /></a>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors text-2xl" aria-label="YouTube"><FaYoutube /></a>
+                <a href="https://www.facebook.com/aalborgcricketclub/" className="text-gray-300 hover:text-white transition-colors mr-2 text-2xl" aria-label="Facebook"><FaFacebook /></a>
+                <a href="https://www.instagram.com/explore/tags/aalborgcricketclub/" className="text-gray-300 hover:text-white transition-colors mr-2 text-2xl" aria-label="Instagram"><FaInstagram /></a>
               </div>
             </div>
           </div>
