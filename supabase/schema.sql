@@ -22,6 +22,13 @@ for select
 to authenticated
 using (true);
 
+drop policy if exists "news_select_anon_active" on public.news;
+create policy "news_select_anon_active"
+on public.news
+for select
+to anon
+using (is_active = true);
+
 drop policy if exists "news_insert_authenticated" on public.news;
 create policy "news_insert_authenticated"
 on public.news
@@ -69,6 +76,13 @@ on public.events
 for select
 to authenticated
 using (true);
+
+drop policy if exists "events_select_anon_active" on public.events;
+create policy "events_select_anon_active"
+on public.events
+for select
+to anon
+using (is_active = true);
 
 drop policy if exists "events_insert_authenticated" on public.events;
 create policy "events_insert_authenticated"

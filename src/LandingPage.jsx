@@ -63,11 +63,10 @@ const LandingPage = () => {
         const { data, error } = await supabase
           .from("news")
           .select("id, title, summary, content, date, is_active, image_url")
+          .eq("is_active", true)
           .order("date", { ascending: false });
         if (error) throw error;
-        // Only show active news
-        const activeNews = (data || []).filter(n => n.is_active);
-        setNews(activeNews);
+        setNews(data || []);
       } catch (err) {
         setNewsError(err.message || "Could not load news.");
       } finally {
@@ -103,16 +102,14 @@ const LandingPage = () => {
       try {
         const { getSupabaseClient } = await import("./lib/supabase");
         const supabase = getSupabaseClient();
-        const today = new Date();
         const { data, error } = await supabase
           .from("events")
           .select("id, title, date, time, location, is_active, event_type")
+          .eq("is_active", true)
           .order("date", { ascending: true });
         if (error) throw error;
         console.log("Fetched events from DB:", data);
-        // Show all events where is_active is true
-        const activeEvents = (data || []).filter(ev => ev.is_active);
-        setEvents(activeEvents);
+        setEvents(data || []);
       } catch (err) {
         setEventsError(err.message || "Could not load events.");
       } finally {
