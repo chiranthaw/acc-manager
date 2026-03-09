@@ -5,6 +5,8 @@ import logoImg from './images/acc-logo-new.png';
 import heroBg from './images/acc1.jpg';
 import upcomingMatchesBg from './images/acc-1.png';
 import holdetImg from './images/holdet.jpg';
+import schoolCricketImg1 from './images/skolecricket.jpg';
+import schoolCricketImg2 from './images/foreningsfestival.jpg';
 import translations from './lang';
 import ContactSection from './ContactSection';
 import SponsorsSection from './SponsorsSection';
@@ -48,8 +50,19 @@ const LandingPage = () => {
     setLang((prev) => (prev === 'en' ? 'da' : 'en'));
   };
 
-  // Use imported translations
   const t = translations;
+  const schoolCricketLinks = [
+    {
+      title: t[lang].schoolCricketCard1Title,
+      image: schoolCricketImg1,
+      url: 'https://spillercricket.dk/',
+    },
+    {
+      title: t[lang].schoolCricketCard2Title,
+      image: schoolCricketImg2,
+      url: 'https://skoleidraet.dk/',
+    },
+  ];
   const [news, setNews] = useState([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState("");
@@ -367,6 +380,45 @@ const LandingPage = () => {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* School Cricket Section */}
+      <section className={theme === 'dark' ? 'py-16 bg-gray-800' : 'py-16 bg-gray-50'}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h3 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              {t[lang].schoolCricketTitle}
+            </h3>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {schoolCricketLinks.map((item) => (
+              <a
+                key={item.title}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={theme === 'dark'
+                  ? 'block bg-gray-900 rounded-xl overflow-hidden border border-slate-700 hover:border-green-500 transition-colors'
+                  : 'block bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-green-500 transition-colors'}
+              >
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-56 object-cover"
+                />
+                <div className="p-5">
+                  <h4 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {item.title}
+                  </h4>
+                  <p className={theme === 'dark' ? 'text-green-300' : 'text-green-700'}>
+                    {t[lang].schoolCricketVisit}
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       </section>
 
