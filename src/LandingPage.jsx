@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import logoImg from './images/acc-logo-new.png';
 import heroBg from './images/acc1.jpg';
+import upcomingMatchesBg from './images/acc-1.png';
 import holdetImg from './images/holdet.jpg';
 import translations from './lang';
 import ContactSection from './ContactSection';
@@ -82,9 +83,22 @@ const LandingPage = () => {
   // Carousel state for events
   const [eventStartIdx, setEventStartIdx] = useState(0);
 
-  // Helper to show only 3 most recent events (by date desc)
-  const sortedEvents = [...events].sort((a, b) => new Date(b.date) - new Date(a.date));
+  // Helper to show only non-match events (by date desc)
+  const sortedEvents = [...events]
+    .filter((event) => (event.event_type || '').toLowerCase() !== 'match')
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
   const visibleEvents = sortedEvents.slice(eventStartIdx, eventStartIdx + 3);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const upcomingMatches = [...events]
+    .filter((event) => {
+      if ((event.event_type || '').toLowerCase() !== 'match' || !event.date) {
+        return false;
+      }
+      const eventDate = new Date(`${event.date}T00:00:00`);
+      return !Number.isNaN(eventDate.getTime()) && eventDate >= todayStart;
+    })
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   const canGoPrev = eventStartIdx > 0;
   const canGoNext = eventStartIdx + 3 < sortedEvents.length;
@@ -139,6 +153,7 @@ const LandingPage = () => {
             <nav className="hidden md:flex space-x-8">
               <a href="#about" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].about}</a>
               <a href="#news" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].news}</a>
+              <a href="#matches" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].matches}</a>
               <a href="#events" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].events}</a>
               <a href="#sponsors" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>Sponsors</a>
               <a href="#contact" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].contact}</a>
@@ -303,6 +318,58 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Upcoming Matches Section */}
+      <section
+        id="matches"
+        className={theme === 'dark' ? 'py-12 text-white' : 'py-12 text-gray-900'}
+        style={{
+          backgroundImage: theme === 'dark'
+            ? `linear-gradient(rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.82)), url(${upcomingMatchesBg})`
+            : `linear-gradient(rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.86)), url(${upcomingMatchesBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h3 className={`text-3xl font-bold mb-3 flex items-center justify-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              <span>{t[lang].upcomingMatchesTitle}</span>
+            </h3>
+          </div>
+
+          {eventsLoading ? (
+            <div className="text-center text-slate-400">{t[lang].upcomingMatchesLoading}</div>
+          ) : eventsError ? (
+            <div className="text-center text-rose-400">{eventsError}</div>
+          ) : upcomingMatches.length === 0 ? (
+            <div className="text-center text-slate-400">{t[lang].upcomingMatchesEmpty}</div>
+          ) : (
+            <div className="space-y-3 max-w-4xl mx-auto">
+              {upcomingMatches.map((match) => (
+                <div
+                  key={match.id}
+                  className={theme === 'dark'
+                    ? 'rounded-lg border border-slate-700 bg-slate-900 px-5 py-4'
+                    : 'rounded-lg border border-slate-200 bg-white px-5 py-4'}
+                >
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <h4 className={`text-lg font-semibold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      <span aria-hidden="true">🏏</span>
+                      <span>{match.title}</span>
+                    </h4>
+                    <div className={theme === 'dark' ? 'text-sm text-slate-300' : 'text-sm text-slate-600'}>
+                      {t[lang].dateLabel}: {match.date}
+                      {match.time ? ` • ${t[lang].timeLabel}: ${match.time}` : ''}
+                      {match.location ? ` • ${t[lang].locationLabel}: ${match.location}` : ''}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Events Section */}
       <section id="events" className={theme === 'dark' ? 'py-16 bg-gray-900' : 'py-16 bg-white'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -364,9 +431,9 @@ const LandingPage = () => {
                             <h4 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{event.title}</h4>
                           </div>
                           <div className={theme === 'dark' ? 'space-y-1 text-gray-300' : 'space-y-1 text-gray-600'}>
-                            <p><span className="font-medium">Date:</span> {event.date}</p>
-                            <p><span className="font-medium">Time:</span> {event.time}</p>
-                            <p><span className="font-medium">Location:</span> {event.location}</p>
+                            <p><span className="font-medium">{t[lang].dateLabel}:</span> {event.date}</p>
+                            <p><span className="font-medium">{t[lang].timeLabel}:</span> {event.time}</p>
+                            <p><span className="font-medium">{t[lang].locationLabel}:</span> {event.location}</p>
                           </div>
                         </div>
                       );
