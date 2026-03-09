@@ -87,7 +87,8 @@ const translations = {
     facebook: 'Facebook',
     instagram: 'Instagram',
     twitter: 'Twitter',
-  },
+    boardTitle: 'Board',
+    boardDescription: "ACC's statutes from the founding general meeting in 2000. Note! Voting rights at the general meeting – only paying members. The financial year follows the calendar year. Statutes for Aalborg Cricket Club.",  },
   da: {
     clubName: 'Aalborg Cricket Klub',
     welcome: 'Velkommen til Aalborg Cricket Klub',
@@ -173,6 +174,8 @@ const translations = {
     facebook: 'Facebook',
     instagram: 'Instagram',
     twitter: 'Twitter',
+    boardTitle: 'Bestyrelse',
+    boardDescription: 'ACC´s vedtægter fra den stiftende generalforsamling år 2000 ACC Vedtægter. Bemærk! stemmeret generalforsamling – kun betalende medlemmer. Regnskabet følger kalenderåret.',
   },
 };
 
