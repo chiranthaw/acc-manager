@@ -1,1 +1,9 @@
 @import 'tailwindcss';
+
+html {
+	scroll-padding-top: 1.5rem;
+}
+
+section[id] {
+	scroll-margin-top: 1.5rem;
+}
