@@ -42,9 +42,22 @@ const LandingPage = () => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+
   useEffect(() => {
     localStorage.setItem('lang', lang);
   }, [lang]);
+
+  // Scroll to #news if hash is present
+  useEffect(() => {
+    if (window.location.hash === '#news') {
+      const el = document.getElementById('news');
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100); // Delay to ensure DOM is ready
+      }
+    }
+  }, []);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));

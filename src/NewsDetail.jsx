@@ -60,7 +60,7 @@ function NewsDetail() {
     <div className={theme === 'dark' ? 'min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 text-white' : 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50 text-gray-900'}>
       <div className="max-w-2xl mx-auto p-6">
         <div className="flex justify-between items-center mb-2">
-          <Link to="/" className={theme === 'dark' ? 'text-indigo-400 hover:underline' : 'text-indigo-700 hover:underline'}>&larr; Back to News</Link>
+          <Link to="/#news" className={theme === 'dark' ? 'text-indigo-400 hover:underline' : 'text-indigo-700 hover:underline'}>&larr; Back to News</Link>
           <button
             onClick={toggleTheme}
             className={theme === 'dark'
