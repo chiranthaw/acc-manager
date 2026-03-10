@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import logoImg from './images/acc-logo-new.png';
 import heroBg from './images/acc1.jpg';
+import bowlingBg from './images/bowling.png';
 import upcomingMatchesBg from './images/acc-1.png';
 import holdetImg from './images/holdet.jpg';
 import schoolCricketImg1 from './images/skolecricket.jpg';
@@ -290,6 +291,8 @@ const LandingPage = () => {
               </button>
               <Link
                 to="/admin"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
               >
                 {t[lang].adminPortal}
@@ -325,6 +328,8 @@ const LandingPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/admin"
+              target="_blank"
+              rel="noopener noreferrer"
               className={theme === 'dark' ? 'bg-white text-green-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors' : 'bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors'}
             >
               {t[lang].accessAdmin}
@@ -622,8 +627,8 @@ const LandingPage = () => {
         className={theme === 'dark' ? 'py-16' : 'py-16'}
           style={{
             backgroundImage: theme === 'dark'
-              ? `linear-gradient(rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.82)), url(${heroBg})`
-              : `linear-gradient(rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.86)), url(${heroBg})`,
+              ? `linear-gradient(rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.82)), url(${bowlingBg})`
+              : `linear-gradient(rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.82)), url(${bowlingBg})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}

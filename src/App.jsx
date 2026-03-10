@@ -59,7 +59,7 @@ function AdminPortalApp() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   // admin section states
-  const [currentView, setCurrentView] = useState('players'); // 'players' or 'admin'
+  const [currentView, setCurrentView] = useState('admin'); // 'players' or 'admin'
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailSubject, setEmailSubject] = useState('ACC Membership - Payment Reminder');
   const [emailBody, setEmailBody] = useState(
@@ -738,15 +738,6 @@ function AdminPortalApp() {
               <nav className="hidden items-center gap-5 text-sm text-slate-300 sm:flex">
                 <button
                   type="button"
-                  onClick={() => setCurrentView('players')}
-                  className={`transition ${
-                    currentView === 'players' ? 'text-white' : 'hover:text-white'
-                  }`}
-                >
-                  Players
-                </button>
-                <button
-                  type="button"
                   onClick={() => setCurrentView('admin')}
                   className={`transition ${
                     currentView === 'admin' ? 'text-white' : 'hover:text-white'
@@ -1197,6 +1188,170 @@ function AdminPortalApp() {
             </>
           )}
         </section>
+
+        {isPlayerModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+            <div className="w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+              <h2 className="text-lg font-semibold text-white">
+                {playerModalMode === 'add' ? 'Add Player' : 'Edit Player'}
+              </h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Manage player profile and yearly membership/payment details.
+              </p>
+
+              <form onSubmit={handleSavePlayer} className="mt-5 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerName">
+                      Full name
+                    </label>
+                    <input
+                      id="playerName"
+                      type="text"
+                      value={newPlayerName}
+                      onChange={(event) => setNewPlayerName(event.target.value)}
+                      required
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerEmail">
+                      Email
+                    </label>
+                    <input
+                      id="playerEmail"
+                      type="email"
+                      value={newPlayerEmail}
+                      onChange={(event) => setNewPlayerEmail(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerPhone">
+                      Phone
+                    </label>
+                    <input
+                      id="playerPhone"
+                      type="text"
+                      value={newPlayerPhone}
+                      onChange={(event) => setNewPlayerPhone(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerTeam">
+                      Team
+                    </label>
+                    <select
+                      id="playerTeam"
+                      value={newPlayerTeam}
+                      onChange={(event) => setNewPlayerTeam(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    >
+                      {TEAM_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerAddress">
+                      Address
+                    </label>
+                    <input
+                      id="playerAddress"
+                      type="text"
+                      value={newPlayerAddress}
+                      onChange={(event) => setNewPlayerAddress(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerYear">
+                      Year
+                    </label>
+                    <input
+                      id="playerYear"
+                      type="number"
+                      value={newPlayerYear}
+                      onChange={(event) => setNewPlayerYear(Number(event.target.value))}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerMembership">
+                      Membership
+                    </label>
+                    <select
+                      id="playerMembership"
+                      value={newPlayerMembership}
+                      onChange={(event) => setNewPlayerMembership(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    >
+                      {MEMBERSHIP_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerAmount">
+                      Amount due
+                    </label>
+                    <input
+                      id="playerAmount"
+                      type="number"
+                      min="0"
+                      value={newPlayerAmount}
+                      onChange={(event) => setNewPlayerAmount(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerPaid">
+                      Amount paid
+                    </label>
+                    <input
+                      id="playerPaid"
+                      type="number"
+                      min="0"
+                      value={newPlayerPaid}
+                      onChange={(event) => setNewPlayerPaid(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsPlayerModalOpen(false)}
+                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+                    disabled={savingPlayer}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingPlayer}
+                    className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:opacity-60"
+                  >
+                    {savingPlayer
+                      ? 'Saving...'
+                      : playerModalMode === 'add'
+                        ? 'Add Player'
+                        : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Payment Reminder Modal */}
         {isEmailModalOpen && (
