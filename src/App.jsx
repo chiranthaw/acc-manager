@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { getSupabaseClient, isSupabaseConfigured } from './lib/supabase';
 import logoImg from './images/acc-logo-new.png';
+import LandingPage from './LandingPage';
+import EventManager from './EventManager';
+import NewsManager from './NewsManager';
+import NewsDetail from './NewsDetail';
 
 const MEMBERSHIP_OPTIONS = [
   { value: 'full', label: 'Full membership' },
@@ -13,9 +18,11 @@ const TEAM_OPTIONS = [
   { value: 'second', label: '2nd team' },
 ];
 
-function App() {
+function AdminPortalApp() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [adminAccessLoading, setAdminAccessLoading] = useState(false);
+  const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState('');
   const [players, setPlayers] = useState([]);
@@ -54,7 +61,7 @@ function App() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   // admin section states
-  const [currentView, setCurrentView] = useState('players'); // 'players' or 'admin'
+  const [currentView, setCurrentView] = useState('admin'); // 'players' or 'admin'
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailSubject, setEmailSubject] = useState('ACC Membership - Payment Reminder');
   const [emailBody, setEmailBody] = useState(
@@ -66,6 +73,12 @@ function App() {
   const [unpaidPlayers, setUnpaidPlayers] = useState([]);
   const [unpaidLoadingError, setUnpaidLoadingError] = useState('');
   const [selectedPlayersForEmail, setSelectedPlayersForEmail] = useState(new Set());
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  const [adminUsersError, setAdminUsersError] = useState('');
+  const [adminActionMessage, setAdminActionMessage] = useState('');
+  const [approvalEmail, setApprovalEmail] = useState('');
+  const [adminActionLoadingEmail, setAdminActionLoadingEmail] = useState('');
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -111,13 +124,51 @@ function App() {
   }, [session]);
 
   useEffect(() => {
-    if (!session) {
+    const checkAdminAccess = async () => {
+      if (!session) {
+        setHasAdminAccess(false);
+        setAdminAccessLoading(false);
+        return;
+      }
+
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        setHasAdminAccess(false);
+        setAdminAccessLoading(false);
+        return;
+      }
+
+      setAdminAccessLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('admin_users')
+          .select('is_approved')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        setHasAdminAccess(Boolean(data?.is_approved));
+      } catch {
+        setHasAdminAccess(false);
+      } finally {
+        setAdminAccessLoading(false);
+      }
+    };
+
+    checkAdminAccess();
+  }, [session]);
+
+  useEffect(() => {
+    if (!session || !hasAdminAccess) {
       setPlayers([]);
       return;
     }
 
     loadPlayersForYear(selectedYear);
-  }, [session, selectedYear]);
+  }, [session, selectedYear, hasAdminAccess]);
 
   const loadPlayersForYear = async (year) => {
     const supabase = getSupabaseClient();
@@ -506,7 +557,7 @@ function App() {
         }
 
         setMessage(
-          'Account created. Check your email for confirmation if required.',
+          'Account created. Check your email for confirmation if required. Your admin access must be approved before you can use the portal.',
         );
       }
     } catch (submitError) {
@@ -607,6 +658,67 @@ function App() {
     }
   };
 
+  const loadAdminUsers = async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase || !session || !hasAdminAccess) return;
+
+    setAdminUsersLoading(true);
+    setAdminUsersError('');
+    try {
+      const { data, error } = await supabase.rpc('get_admin_users');
+      if (error) throw error;
+      setAdminUsers(data || []);
+    } catch (err) {
+      setAdminUsersError(err.message || 'Failed to load admin users.');
+    } finally {
+      setAdminUsersLoading(false);
+    }
+  };
+
+  const handleSetAdminApproval = async (targetEmail, approve) => {
+    const normalizedEmail = (targetEmail || '').trim().toLowerCase();
+    if (!normalizedEmail) {
+      setAdminUsersError('Please enter an email address.');
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    if (!supabase || !session || !hasAdminAccess) return;
+
+    setAdminUsersError('');
+    setAdminActionMessage('');
+    setAdminActionLoadingEmail(normalizedEmail);
+
+    try {
+      const { error } = await supabase.rpc('set_admin_approval', {
+        target_email: normalizedEmail,
+        approve,
+      });
+
+      if (error) throw error;
+
+      setAdminActionMessage(
+        `${normalizedEmail} ${approve ? 'approved' : 'set as pending'}.`,
+      );
+
+      if (approvalEmail.trim().toLowerCase() === normalizedEmail) {
+        setApprovalEmail('');
+      }
+
+      await loadAdminUsers();
+    } catch (err) {
+      setAdminUsersError(err.message || 'Failed to update admin approval.');
+    } finally {
+      setAdminActionLoadingEmail('');
+    }
+  };
+
+  useEffect(() => {
+    if (session && hasAdminAccess && currentView === 'admin') {
+      loadAdminUsers();
+    }
+  }, [session, hasAdminAccess, currentView]);
+
   const openEmailModal = async () => {
     setEmailError('');
     setEmailMessage('');
@@ -681,11 +793,34 @@ function App() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || adminAccessLoading) {
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100 antialiased sm:px-6 lg:px-8">
         <div className="mx-auto flex min-h-[80vh] w-full max-w-5xl items-center justify-center">
           <p className="text-sm text-slate-300">Loading...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (session && !hasAdminAccess) {
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100 antialiased sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-[80vh] w-full max-w-3xl items-center justify-center">
+          <div className="w-full rounded-2xl border border-amber-500/30 bg-amber-500/10 p-8 text-center">
+            <h1 className="text-2xl font-semibold text-white">Admin access pending approval</h1>
+            <p className="mt-3 text-sm text-slate-200">
+              Your account is signed in, but it has not been approved for admin access yet.
+              Please contact an existing admin to approve your account.
+            </p>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="mt-6 rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+            >
+              Log out
+            </button>
+          </div>
         </div>
       </main>
     );
@@ -731,15 +866,6 @@ function App() {
                 <p className="text-base font-semibold text-white">ACC Manager</p>
               </div>
               <nav className="hidden items-center gap-5 text-sm text-slate-300 sm:flex">
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('players')}
-                  className={`transition ${
-                    currentView === 'players' ? 'text-white' : 'hover:text-white'
-                  }`}
-                >
-                  Players
-                </button>
                 <button
                   type="button"
                   onClick={() => setCurrentView('admin')}
@@ -957,506 +1083,468 @@ function App() {
             </table>
           </div>
             </>
+          ) : currentView === 'admin' ? (
+            <>
+              <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white mb-2">Manage Players</h2>
+                      <p className="mb-3 text-sm text-slate-400">Open the player management view.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('players')}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                    >
+                      Manage Players
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">Admin</h2>
+                      <p className="mt-1 text-sm text-slate-400">
+                        Manage email communications for unpaid players.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openEmailModal}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
+                    >
+                      Send Payment Reminder
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-white">Admin Access</h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Approve or revoke admin portal access by account email.
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <input
+                      type="email"
+                      value={approvalEmail}
+                      onChange={(event) => setApprovalEmail(event.target.value)}
+                      placeholder="admin@email.com"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSetAdminApproval(approvalEmail, true)}
+                      disabled={adminActionLoadingEmail === approvalEmail.trim().toLowerCase()}
+                      className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:opacity-60"
+                    >
+                      {adminActionLoadingEmail === approvalEmail.trim().toLowerCase()
+                        ? 'Saving...'
+                        : 'Approve'}
+                    </button>
+                  </div>
+
+                  {adminUsersError && (
+                    <p className="mt-3 rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+                      {adminUsersError}
+                    </p>
+                  )}
+                  {adminActionMessage && (
+                    <p className="mt-3 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+                      {adminActionMessage}
+                    </p>
+                  )}
+
+                  <div className="mt-4 overflow-x-auto rounded-xl border border-slate-800">
+                    <table className="min-w-full divide-y divide-slate-800">
+                      <thead className="bg-slate-900/80">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+                            Email
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+                            Status
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-400">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800 bg-slate-900">
+                        {adminUsersLoading ? (
+                          <tr>
+                            <td colSpan={3} className="px-4 py-4 text-sm text-slate-400">
+                              Loading admin users...
+                            </td>
+                          </tr>
+                        ) : adminUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan={3} className="px-4 py-4 text-sm text-slate-400">
+                              No accounts found.
+                            </td>
+                          </tr>
+                        ) : (
+                          adminUsers.map((adminUser) => {
+                            const rowEmail = (adminUser.email || '').toLowerCase();
+                            const rowLoading = adminActionLoadingEmail === rowEmail;
+                            const isSelf = rowEmail === (session.user.email || '').toLowerCase();
+                            return (
+                              <tr key={adminUser.user_id}>
+                                <td className="px-4 py-3 text-sm text-slate-100">{adminUser.email}</td>
+                                <td className="px-4 py-3 text-sm text-slate-300">
+                                  {adminUser.is_approved ? 'Approved' : 'Pending'}
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  {adminUser.is_approved ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSetAdminApproval(adminUser.email, false)}
+                                      disabled={rowLoading || isSelf}
+                                      className="rounded-lg border border-rose-600/60 px-3 py-1.5 text-xs text-rose-200 transition hover:border-rose-500 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      {rowLoading ? 'Saving...' : 'Set Pending'}
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSetAdminApproval(adminUser.email, true)}
+                                      disabled={rowLoading}
+                                      className="rounded-lg bg-indigo-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-indigo-400 disabled:opacity-60"
+                                    >
+                                      {rowLoading ? 'Saving...' : 'Approve'}
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {/* New Manage Events section */}
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white mb-2">Manage Events</h2>
+                      <p className="mb-3 text-sm text-slate-400">Add, edit, activate/deactivate, or delete club events and matches.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('events')}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                    >
+                      Manage Events
+                    </button>
+                  </div>
+                </div>
+                {/* New Manage News section */}
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white mb-2">Manage News</h2>
+                      <p className="mb-3 text-sm text-slate-400">Add, edit, activate/deactivate, or delete club news items.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('news')}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                    >
+                      Manage News
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : currentView === 'events' ? (
+            <EventManager />
+          ) : currentView === 'news' ? (
+            <NewsManager />
           ) : (
             <>
               <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h1 className="text-xl font-semibold text-white">Admin</h1>
+                    <h1 className="text-xl font-semibold text-white">Players</h1>
                     <p className="mt-1 text-sm text-slate-400">
-                      Manage email communications for unpaid players.
+                      Register players and manage membership and payment status for{' '}
+                      {selectedYear}.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={openEmailModal}
-                    className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
-                  >
-                    Send Payment Reminder
-                  </button>
-                </div>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <input
+                  type="text"
+                  value={playerSearch}
+                  onChange={(event) => setPlayerSearch(event.target.value)}
+                  placeholder="Search players..."
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400 sm:w-64"
+                />
+                <button
+                  type="button"
+                  onClick={openAddPlayerModal}
+                  className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
+                >
+                  Add player
+                </button>
               </div>
+            </div>
+          </div>
+
+          {dashboardError && (
+            <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+              {dashboardError}
+            </p>
+          )}
             </>
           )}
+        </section>
 
-          {isPlayerModalOpen && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
-              <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">
-                    {playerModalMode === 'add' ? 'Add player' : 'Edit player'}
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!savingPlayer) {
-                        setIsPlayerModalOpen(false);
-                      }
-                    }}
-                    className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:text-white"
-                  >
-                    Close
-                  </button>
-                </div>
+        {isPlayerModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+            <div className="w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+              <h2 className="text-lg font-semibold text-white">
+                {playerModalMode === 'add' ? 'Add Player' : 'Edit Player'}
+              </h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Manage player profile and yearly membership/payment details.
+              </p>
 
-                <form onSubmit={handleSavePlayer} className="mt-4 space-y-4">
+              <form onSubmit={handleSavePlayer} className="mt-5 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-name"
-                    >
-                      Player name
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerName">
+                      Full name
                     </label>
                     <input
-                      id="new-player-name"
+                      id="playerName"
+                      type="text"
                       value={newPlayerName}
                       onChange={(event) => setNewPlayerName(event.target.value)}
-                      placeholder="Player full name"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                      required
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
                     />
-
+                  </div>
                   <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-email"
-                    >
-                      Email (optional)
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerEmail">
+                      Email
                     </label>
                     <input
-                      id="new-player-email"
+                      id="playerEmail"
                       type="email"
                       value={newPlayerEmail}
-                      onChange={(e) => setNewPlayerEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                      onChange={(event) => setNewPlayerEmail(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
                     />
                   </div>
-
                   <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-phone"
-                    >
-                      Phone (optional)
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerPhone">
+                      Phone
                     </label>
                     <input
-                      id="new-player-phone"
-                      type="tel"
+                      id="playerPhone"
+                      type="text"
                       value={newPlayerPhone}
-                      onChange={(e) => setNewPlayerPhone(e.target.value)}
-                      placeholder="+45 25 47 85 44"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                      onChange={(event) => setNewPlayerPhone(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
                     />
                   </div>
-
                   <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-address"
-                    >
-                      Address (optional)
-                    </label>
-                    <textarea
-                      id="new-player-address"
-                      value={newPlayerAddress}
-                      onChange={(e) => setNewPlayerAddress(e.target.value)}
-                      placeholder="Street, City, State ZIP"
-                      rows={2}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-team"
-                    >
-                      Main team
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerTeam">
+                      Team
                     </label>
                     <select
-                      id="new-player-team"
+                      id="playerTeam"
                       value={newPlayerTeam}
                       onChange={(event) => setNewPlayerTeam(event.target.value)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
                     >
                       {TEAM_OPTIONS.map((option) => (
-                        <option
-                          key={`team-${option.value}`}
-                          value={option.value}
-                        >
+                        <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
                       ))}
                     </select>
                   </div>
-
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label
-                        className="mb-1.5 block text-sm text-slate-300"
-                        htmlFor="new-player-year"
-                      >
-                        Year
-                      </label>
-                      <select
-                        id="new-player-year"
-                        value={newPlayerYear}
-                        onChange={(event) =>
-                          setNewPlayerYear(Number(event.target.value))
-                        }
-                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                      >
-                        {yearOptions.map((year) => (
-                          <option key={`add-${year}`} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        className="mb-1.5 block text-sm text-slate-300"
-                        htmlFor="new-player-membership"
-                      >
-                        Membership
-                      </label>
-                      <select
-                        id="new-player-membership"
-                        value={newPlayerMembership}
-                        onChange={(event) =>
-                          setNewPlayerMembership(event.target.value)
-                        }
-                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                      >
-                        {MEMBERSHIP_OPTIONS.map((option) => (
-                          <option
-                            key={`new-${option.value}`}
-                            value={option.value}
-                          >
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        className="mb-1.5 block text-sm text-slate-300"
-                        htmlFor="new-player-paid"
-                      >
-                        Amount paid (installments total)
-                      </label>
-                      <input
-                        id="new-player-paid"
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={newPlayerPaid}
-                        onChange={(event) =>
-                          setNewPlayerPaid(event.target.value)
-                        }
-                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="new-player-amount"
-                    >
-                      Amount to be paid
+                  <div className="sm:col-span-2">
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerAddress">
+                      Address
                     </label>
                     <input
-                      id="new-player-amount"
+                      id="playerAddress"
+                      type="text"
+                      value={newPlayerAddress}
+                      onChange={(event) => setNewPlayerAddress(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerYear">
+                      Year
+                    </label>
+                    <input
+                      id="playerYear"
+                      type="number"
+                      value={newPlayerYear}
+                      onChange={(event) => setNewPlayerYear(Number(event.target.value))}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerMembership">
+                      Membership
+                    </label>
+                    <select
+                      id="playerMembership"
+                      value={newPlayerMembership}
+                      onChange={(event) => setNewPlayerMembership(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    >
+                      {MEMBERSHIP_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerAmount">
+                      Amount due
+                    </label>
+                    <input
+                      id="playerAmount"
                       type="number"
                       min="0"
-                      step="1"
                       value={newPlayerAmount}
-                      onChange={(event) =>
-                        setNewPlayerAmount(event.target.value)
-                      }
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                      onChange={(event) => setNewPlayerAmount(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
                     />
                   </div>
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsPlayerModalOpen(false)}
-                      disabled={savingPlayer}
-                      className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500 hover:text-white disabled:opacity-60"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={savingPlayer || !newPlayerName.trim()}
-                      className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {savingPlayer
-                        ? 'Saving...'
-                        : playerModalMode === 'add'
-                          ? 'Save player'
-                          : 'Save changes'}
-                    </button>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerPaid">
+                      Amount paid
+                    </label>
+                    <input
+                      id="playerPaid"
+                      type="number"
+                      min="0"
+                      value={newPlayerPaid}
+                      onChange={(event) => setNewPlayerPaid(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
                   </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {isProfileModalOpen && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
-              <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">
-                    Edit profile
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!profileLoading) setIsProfileModalOpen(false);
-                    }}
-                    className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:text-white"
-                  >
-                    Close
-                  </button>
                 </div>
 
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSaveProfile();
-                  }}
-                  className="mt-4 space-y-4"
-                >
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="profile-full-name"
-                    >
-                      Full name
-                    </label>
-                    <input
-                      id="profile-full-name"
-                      type="text"
-                      required
-                      value={profileFullName}
-                      onChange={(e) => setProfileFullName(e.target.value)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="profile-email"
-                    >
-                      Email
-                    </label>
-                    <input
-                      id="profile-email"
-                      type="email"
-                      value={profileEmail}
-                      disabled
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-3.5 py-2.5 text-sm text-slate-400 outline-none"
-                    />
-                  </div>
-
-                  {profileError && (
-                    <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-                      {profileError}
-                    </p>
-                  )}
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsProfileModalOpen(false)}
-                      disabled={profileLoading}
-                      className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500 hover:text-white disabled:opacity-60"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={profileLoading}
-                      className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {profileLoading ? 'Saving...' : 'Save changes'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {isEmailModalOpen && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
-              <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">
-                    Send Payment Reminder
-                  </h2>
+                <div className="flex justify-end gap-2 pt-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!emailLoading) setIsEmailModalOpen(false);
-                    }}
-                    className="rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:text-white"
+                    onClick={() => setIsPlayerModalOpen(false)}
+                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+                    disabled={savingPlayer}
                   >
-                    Close
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingPlayer}
+                    className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:opacity-60"
+                  >
+                    {savingPlayer
+                      ? 'Saving...'
+                      : playerModalMode === 'add'
+                        ? 'Add Player'
+                        : 'Save Changes'}
                   </button>
                 </div>
-
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSendEmails();
-                  }}
-                  className="mt-4 space-y-4"
-                >
-                  <div>
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <label className="text-sm text-slate-300">
-                        Unpaid Players ({selectedPlayersForEmail.size} selected)
-                      </label>
-                      <div className="space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedPlayersForEmail(
-                              new Set(unpaidPlayers.map((p) => p.id)),
-                            );
-                          }}
-                          className="text-xs text-indigo-400 hover:text-indigo-300"
-                        >
-                          Select All
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedPlayersForEmail(new Set());
-                          }}
-                          className="text-xs text-slate-400 hover:text-slate-300"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                    </div>
-                    {unpaidLoadingError && (
-                      <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-                        {unpaidLoadingError}
-                      </p>
-                    )}
-                    {unpaidPlayers.length > 0 && (
-                      <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-700 bg-slate-950 p-3">
-                        <ul className="space-y-2">
-                          {unpaidPlayers.map((player) => (
-                            <li key={player.id} className="flex items-start">
-                              <input
-                                type="checkbox"
-                                id={`player-${player.id}`}
-                                checked={selectedPlayersForEmail.has(player.id)}
-                                onChange={(e) => {
-                                  const newSelected = new Set(
-                                    selectedPlayersForEmail,
-                                  );
-                                  if (e.target.checked) {
-                                    newSelected.add(player.id);
-                                  } else {
-                                    newSelected.delete(player.id);
-                                  }
-                                  setSelectedPlayersForEmail(newSelected);
-                                }}
-                                className="mt-0.5 mr-2 cursor-pointer rounded border-slate-600 accent-indigo-500"
-                              />
-                              <label
-                                htmlFor={`player-${player.id}`}
-                                className="text-xs text-slate-300 cursor-pointer flex-1"
-                              >
-                                {player.fullName} - {player.email}
-                              </label>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="email-subject"
-                    >
-                      Email Subject
-                    </label>
-                    <input
-                      id="email-subject"
-                      type="text"
-                      required
-                      value={emailSubject}
-                      onChange={(e) => setEmailSubject(e.target.value)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      className="mb-1.5 block text-sm text-slate-300"
-                      htmlFor="email-body"
-                    >
-                      Email Body
-                    </label>
-                    <textarea
-                      id="email-body"
-                      required
-                      value={emailBody}
-                      onChange={(e) => setEmailBody(e.target.value)}
-                      rows={5}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                    />
-                  </div>
-
-                  {emailError && (
-                    <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-                      {emailError}
-                    </p>
-                  )}
-
-                  {emailMessage && (
-                    <p className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-                      {emailMessage}
-                    </p>
-                  )}
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsEmailModalOpen(false)}
-                      disabled={emailLoading}
-                      className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500 hover:text-white disabled:opacity-60"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={emailLoading || selectedPlayersForEmail.size === 0}
-                      className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {emailLoading
-                        ? 'Sending...'
-                        : `Send Emails (${selectedPlayersForEmail.size})`}
-                    </button>
-                  </div>
-                </form>
-              </div>
+              </form>
             </div>
-          )}
-        </section>
+          </div>
+        )}
+
+        {/* Payment Reminder Modal */}
+        {isEmailModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="w-full max-w-lg rounded-xl bg-slate-900 p-6 shadow-2xl border border-slate-700 relative">
+              <h2 className="text-lg font-semibold text-white mb-2">Send Payment Reminder</h2>
+              <p className="mb-3 text-sm text-slate-400">Send a payment reminder email to selected unpaid players.</p>
+              {emailError && (
+                <p className="mb-2 rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{emailError}</p>
+              )}
+              {emailMessage && (
+                <p className="mb-2 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">{emailMessage}</p>
+              )}
+              <form
+                onSubmit={e => { e.preventDefault(); handleSendEmails(); }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-1">Subject</label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={e => setEmailSubject(e.target.value)}
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-1">Body</label>
+                  <textarea
+                    value={emailBody}
+                    onChange={e => setEmailBody(e.target.value)}
+                    rows={6}
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-1">Select Players</label>
+                  <div className="max-h-40 overflow-y-auto rounded border border-slate-700 bg-slate-950 p-2">
+                    {unpaidPlayers.length === 0 ? (
+                      <p className="text-sm text-slate-400">No unpaid players with email found.</p>
+                    ) : (
+                      unpaidPlayers.map(player => (
+                        <label key={player.id} className="flex items-center gap-2 py-1 text-slate-100 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={selectedPlayersForEmail.has(player.id)}
+                            onChange={e => {
+                              const updated = new Set(selectedPlayersForEmail);
+                              if (e.target.checked) updated.add(player.id);
+                              else updated.delete(player.id);
+                              setSelectedPlayersForEmail(updated);
+                            }}
+                          />
+                          {player.fullName} <span className="ml-2 text-xs text-slate-400">({player.email})</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsEmailModalOpen(false)}
+                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+                    disabled={emailLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:opacity-60"
+                    disabled={emailLoading}
+                  >
+                    {emailLoading ? 'Sending...' : 'Send Email'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     );
   }
@@ -1632,6 +1720,19 @@ function App() {
         </div>
       </div>
     </main>
+  );
+}
+
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/admin/*" element={<AdminPortalApp />} />
+        <Route path="/news/:id" element={<NewsDetail />} />
+        <Route path="/*" element={<LandingPage />} />
+      </Routes>
+    </Router>
   );
 }
 
