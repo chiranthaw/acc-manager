@@ -73,8 +73,8 @@ const translations = {
         link: 'https://www.google.dk/maps/dir//Dyrskuevej+2,+9200+Aalborg/@57.0065879,9.8825229,16z/data=!4m8!4m7!1m0!1m5!1m1!1s0x464933a1976f7c2d:0xea5304c1daa65d8a!2m2!1d9.886911!2d57.006588',
       },
     ],
-    phone: '📞 +45 12 34 56 78',
-    email: '✉️ info@aalborgcricketclub.com',
+    phone: '📞 +45 22 86 20 48',
+    email: '✉️ aalborgcricket@gmail.com',
     copyright: '© 2026 Aalborg Cricket Club. All rights reserved.',
     about: 'About',
     news: 'News',
@@ -86,6 +86,7 @@ const translations = {
     lang: 'Dansk',
     boardTitle: 'Board',
     boardDescription: "ACC's statutes from the founding general meeting in 2000. Note! Voting rights at the general meeting – only paying members. The financial year follows the calendar year. Statutes for Aalborg Cricket Club.",  },
+    statutesText: 'Read statutes',
   da: {
     clubName: 'Aalborg Cricket Klub',
     welcome: 'Velkommen til Aalborg Cricket Klub',
@@ -157,8 +158,8 @@ const translations = {
         link: 'https://www.google.dk/maps/dir//Dyrskuevej+2,+9200+Aalborg/@57.0065879,9.8825229,16z/data=!4m8!4m7!1m0!1m5!1m1!1s0x464933a1976f7c2d:0xea5304c1daa65d8a!2m2!1d9.886911!2d57.006588',
       },
     ],
-    phone: '📞 +45 12 34 56 78',
-    email: '✉️ info@aalborgcricketclub.com',
+    phone: '📞 +45 22 86 20 48',
+    email: '✉️ aalborgcricket@gmail.com',
     copyright: '© 2026 Aalborg Cricket Klub. Alle rettigheder forbeholdes.',
     about: 'Om',
     news: 'Nyt',
@@ -170,6 +171,7 @@ const translations = {
     lang: 'English',
     boardTitle: 'Bestyrelse',
     boardDescription: 'ACC´s vedtægter fra den stiftende generalforsamling år 2000 ACC Vedtægter. Bemærk! stemmeret generalforsamling – kun betalende medlemmer. Regnskabet følger kalenderåret.',
+    statutesText: 'Læs vedtægter',
   },
 };
 

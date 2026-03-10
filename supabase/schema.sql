@@ -1,3 +1,39 @@
+create extension if not exists pgcrypto;
+
+create table if not exists public.admin_users (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  is_approved boolean not null default false,
+  approved_at timestamptz,
+  approved_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.admin_users enable row level security;
+
+drop policy if exists "admin_users_select_own" on public.admin_users;
+create policy "admin_users_select_own"
+on public.admin_users
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create or replace function public.is_admin_approved()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.admin_users
+    where user_id = auth.uid()
+      and is_approved = true
+  );
+$$;
+
+grant execute on function public.is_admin_approved() to authenticated;
+
 -- News table for club news items
 create table if not exists public.news (
   id uuid primary key default gen_random_uuid(),
@@ -20,7 +56,7 @@ create policy "news_select_authenticated"
 on public.news
 for select
 to authenticated
-using (true);
+using (public.is_admin_approved());
 
 drop policy if exists "news_select_anon_active" on public.news;
 create policy "news_select_anon_active"
@@ -34,22 +70,22 @@ create policy "news_insert_authenticated"
 on public.news
 for insert
 to authenticated
-with check (true);
+with check (public.is_admin_approved());
 
 drop policy if exists "news_update_authenticated" on public.news;
 create policy "news_update_authenticated"
 on public.news
 for update
 to authenticated
-using (true)
-with check (true);
+using (public.is_admin_approved())
+with check (public.is_admin_approved());
 
 drop policy if exists "news_delete_authenticated" on public.news;
 create policy "news_delete_authenticated"
 on public.news
 for delete
 to authenticated
-using (true);
+using (public.is_admin_approved());
 -- Events table for matches, training, school, and other events
 create table if not exists public.events (
   id uuid primary key default gen_random_uuid(),
@@ -75,7 +111,7 @@ create policy "events_select_authenticated"
 on public.events
 for select
 to authenticated
-using (true);
+using (public.is_admin_approved());
 
 drop policy if exists "events_select_anon_active" on public.events;
 create policy "events_select_anon_active"
@@ -89,23 +125,22 @@ create policy "events_insert_authenticated"
 on public.events
 for insert
 to authenticated
-with check (true);
+with check (public.is_admin_approved());
 
 drop policy if exists "events_update_authenticated" on public.events;
 create policy "events_update_authenticated"
 on public.events
 for update
 to authenticated
-using (true)
-with check (true);
+using (public.is_admin_approved())
+with check (public.is_admin_approved());
 
 drop policy if exists "events_delete_authenticated" on public.events;
 create policy "events_delete_authenticated"
 on public.events
 for delete
 to authenticated
-using (true);
-create extension if not exists pgcrypto;
+using (public.is_admin_approved());
 
 create table if not exists public.players (
   id uuid primary key default gen_random_uuid(),
@@ -169,55 +204,55 @@ create policy "players_select_authenticated"
 on public.players
 for select
 to authenticated
-using (true);
+using (public.is_admin_approved());
 
 drop policy if exists "players_insert_authenticated" on public.players;
 create policy "players_insert_authenticated"
 on public.players
 for insert
 to authenticated
-with check (true);
+with check (public.is_admin_approved());
 
 drop policy if exists "players_update_authenticated" on public.players;
 create policy "players_update_authenticated"
 on public.players
 for update
 to authenticated
-using (true)
-with check (true);
+using (public.is_admin_approved())
+with check (public.is_admin_approved());
 
 drop policy if exists "players_delete_authenticated" on public.players;
 create policy "players_delete_authenticated"
 on public.players
 for delete
 to authenticated
-using (true);
+using (public.is_admin_approved());
 
 drop policy if exists "status_select_authenticated" on public.player_year_status;
 create policy "status_select_authenticated"
 on public.player_year_status
 for select
 to authenticated
-using (true);
+using (public.is_admin_approved());
 
 drop policy if exists "status_insert_authenticated" on public.player_year_status;
 create policy "status_insert_authenticated"
 on public.player_year_status
 for insert
 to authenticated
-with check (true);
+with check (public.is_admin_approved());
 
 drop policy if exists "status_update_authenticated" on public.player_year_status;
 create policy "status_update_authenticated"
 on public.player_year_status
 for update
 to authenticated
-using (true)
-with check (true);
+using (public.is_admin_approved())
+with check (public.is_admin_approved());
 
 drop policy if exists "status_delete_authenticated" on public.player_year_status;
 create policy "status_delete_authenticated"
 on public.player_year_status
 for delete
 to authenticated
-using (true);
+using (public.is_admin_approved());

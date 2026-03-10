@@ -21,6 +21,8 @@ const TEAM_OPTIONS = [
 function AdminPortalApp() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [adminAccessLoading, setAdminAccessLoading] = useState(false);
+  const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState('');
   const [players, setPlayers] = useState([]);
@@ -116,13 +118,51 @@ function AdminPortalApp() {
   }, [session]);
 
   useEffect(() => {
-    if (!session) {
+    const checkAdminAccess = async () => {
+      if (!session) {
+        setHasAdminAccess(false);
+        setAdminAccessLoading(false);
+        return;
+      }
+
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        setHasAdminAccess(false);
+        setAdminAccessLoading(false);
+        return;
+      }
+
+      setAdminAccessLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('admin_users')
+          .select('is_approved')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        setHasAdminAccess(Boolean(data?.is_approved));
+      } catch {
+        setHasAdminAccess(false);
+      } finally {
+        setAdminAccessLoading(false);
+      }
+    };
+
+    checkAdminAccess();
+  }, [session]);
+
+  useEffect(() => {
+    if (!session || !hasAdminAccess) {
       setPlayers([]);
       return;
     }
 
     loadPlayersForYear(selectedYear);
-  }, [session, selectedYear]);
+  }, [session, selectedYear, hasAdminAccess]);
 
   const loadPlayersForYear = async (year) => {
     const supabase = getSupabaseClient();
@@ -511,7 +551,7 @@ function AdminPortalApp() {
         }
 
         setMessage(
-          'Account created. Check your email for confirmation if required.',
+          'Account created. Check your email for confirmation if required. Your admin access must be approved before you can use the portal.',
         );
       }
     } catch (submitError) {
@@ -686,11 +726,34 @@ function AdminPortalApp() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || adminAccessLoading) {
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100 antialiased sm:px-6 lg:px-8">
         <div className="mx-auto flex min-h-[80vh] w-full max-w-5xl items-center justify-center">
           <p className="text-sm text-slate-300">Loading...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (session && !hasAdminAccess) {
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100 antialiased sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-[80vh] w-full max-w-3xl items-center justify-center">
+          <div className="w-full rounded-2xl border border-amber-500/30 bg-amber-500/10 p-8 text-center">
+            <h1 className="text-2xl font-semibold text-white">Admin access pending approval</h1>
+            <p className="mt-3 text-sm text-slate-200">
+              Your account is signed in, but it has not been approved for admin access yet.
+              Please contact an existing admin to approve your account.
+            </p>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="mt-6 rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
+            >
+              Log out
+            </button>
+          </div>
         </div>
       </main>
     );
