@@ -39,15 +39,15 @@ const ActivityCarousel = ({ interval = 3000 }) => {
   }, [interval]);
 
   return (
-    <div className="w-full flex flex-col items-center my-8">
-      <div className="w-full max-w-xl h-64 flex items-center justify-center bg-gray-200 rounded-lg overflow-hidden shadow-lg">
+    <div className="w-full my-8">
+      <div className="w-full h-[340px] sm:h-[420px] md:h-[520px] lg:h-[620px] flex items-center justify-center bg-transparent overflow-hidden shadow-lg">
         <img
           src={images[current].src}
           alt={images[current].alt}
-          className="object-cover w-full h-full transition-all duration-700"
+          className="object-contain w-full h-full transition-all duration-700"
         />
       </div>
-      <div className="flex mt-4 space-x-2">
+      <div className="flex mt-4 justify-center space-x-2">
         {images.map((_, idx) => (
           <button
             key={idx}
