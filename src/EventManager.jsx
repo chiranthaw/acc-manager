@@ -111,7 +111,7 @@ export default function EventManager() {
                 <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell whitespace-nowrap">Date</th>
                 <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell whitespace-nowrap">Location</th>
                 <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell whitespace-nowrap">Active</th>
-                <th className="w-36 px-4 py-4 text-right text-xs font-medium uppercase tracking-wide text-slate-400 whitespace-nowrap">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
