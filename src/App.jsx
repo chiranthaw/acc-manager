@@ -965,20 +965,37 @@ function AdminPortalApp() {
           ) : currentView === 'admin' ? (
             <>
               <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h1 className="text-xl font-semibold text-white">Admin</h1>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Manage email communications for unpaid players.
-                    </p>
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white mb-2">Manage Players</h2>
+                      <p className="mb-3 text-sm text-slate-400">Open the player management view.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('players')}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                    >
+                      Manage Players
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={openEmailModal}
-                    className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
-                  >
-                    Send Payment Reminder
-                  </button>
+                </div>
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">Admin</h2>
+                      <p className="mt-1 text-sm text-slate-400">
+                        Manage email communications for unpaid players.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openEmailModal}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
+                    >
+                      Send Payment Reminder
+                    </button>
+                  </div>
                 </div>
                 {/* New Manage Events section */}
                 <div className="mt-6 border-t border-slate-800 pt-6">
