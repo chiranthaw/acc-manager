@@ -170,7 +170,7 @@ const LandingPage = () => {
 
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
-          to: 'm.chirantha@gmail.com;niika-rabor@hotmail.com',
+          to: 'info@aalborg-cricket.dk',
           subject: `New Membership Inquiry from ${contactForm.name}`,
           html: htmlContent,
         },
