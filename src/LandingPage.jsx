@@ -464,38 +464,53 @@ const LandingPage = () => {
             <div className="text-center text-slate-400">{t[lang].upcomingMatchesEmpty}</div>
           ) : (
             <div className="space-y-3 max-w-4xl mx-auto">
-              {upcomingMatches.map((match) => (
+              {upcomingMatches.map((match) => {
+                const homeTeamName = match.home_team?.name || match.extra?.homeTeam || 'Home Team';
+                const awayTeamName = match.away_team?.name || match.extra?.awayTeam || 'Away Team';
+                const homeLogo = match.home_team?.logo_url || match.extra?.homeLogoUrl || logoImg;
+                const awayLogo = match.away_team?.logo_url || match.extra?.awayLogoUrl || logoImg;
+
+                return (
                 <div
                   key={match.id}
                   className={theme === 'dark'
                     ? 'rounded-lg border border-slate-700 bg-slate-900 px-5 py-4'
                     : 'rounded-lg border border-slate-200 bg-white px-5 py-4'}
                 >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={match.away_team?.logo_url || match.extra?.awayLogoUrl || logoImg}
-                        alt={match.away_team?.name ? `${match.away_team.name} logo` : match.extra?.awayTeam ? `${match.extra.awayTeam} logo` : 'Away team logo'}
-                        className="h-9 w-9 rounded-full border border-slate-300/40 bg-white object-contain p-1"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = logoImg;
-                        }}
-                      />
-                      <h4 className={`text-lg font-semibold flex items-center gap-2 min-w-0 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        <span className="truncate">{match.title}</span>
-                      </h4>
-                      <img
-                        src={match.home_team?.logo_url || match.extra?.homeLogoUrl || logoImg}
-                        alt={match.home_team?.name ? `${match.home_team.name} logo` : match.extra?.homeTeam ? `${match.extra.homeTeam} logo` : 'Home team logo'}
-                        className="h-9 w-9 rounded-full border border-slate-300/40 bg-white object-contain p-1"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = logoImg;
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                  <div className="space-y-2">
+                    <h4 className={`text-xl font-semibold flex items-center gap-2 min-w-0 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      <span className="inline-flex items-center gap-2 min-w-0">
+                        <img
+                          src={homeLogo}
+                          alt={`${homeTeamName} logo`}
+                          className="h-11 w-11 rounded-full border border-slate-300/40 bg-white object-contain p-1"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = logoImg;
+                          }}
+                        />
+                        <span className="truncate">{homeTeamName}</span>
+                      </span>
+                      <span className="text-slate-400">vs.</span>
+                      <span className="inline-flex items-center gap-2 min-w-0">
+                        <img
+                          src={awayLogo}
+                          alt={`${awayTeamName} logo`}
+                          className="h-11 w-11 rounded-full border border-slate-300/40 bg-white object-contain p-1"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = logoImg;
+                          }}
+                        />
+                        <span className="truncate">{awayTeamName}</span>
+                      </span>
+                      {match.location ? (
+                        <span className={theme === 'dark' ? 'ml-3 text-sm font-normal text-slate-300' : 'ml-3 text-sm font-normal text-slate-600'}>
+                          {t[lang].locationLabel}: {match.location}
+                        </span>
+                      ) : null}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={theme === 'dark'
                           ? 'inline-flex items-center rounded-full bg-indigo-500/20 px-3 py-1 text-sm font-semibold text-indigo-200 ring-1 ring-indigo-400/40'
@@ -512,15 +527,11 @@ const LandingPage = () => {
                           {t[lang].timeLabel}: {match.time}
                         </span>
                       ) : null}
-                      {match.location ? (
-                        <span className={theme === 'dark' ? 'text-sm text-slate-300' : 'text-sm text-slate-600'}>
-                          {t[lang].locationLabel}: {match.location}
-                        </span>
-                      ) : null}
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
