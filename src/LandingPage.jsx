@@ -536,10 +536,12 @@ const LandingPage = () => {
                           ? 'shrink-0 rounded-md border border-indigo-300/60 bg-indigo-500/20 px-4 py-2 text-right text-white shadow-sm'
                           : 'shrink-0 rounded-md border border-indigo-300 bg-indigo-100 px-4 py-2 text-right text-indigo-950 shadow-sm'}
                       >
-                        <div className="text-2xl font-semibold leading-tight">{match.date}</div>
-                        {match.time ? (
-                          <div className="mt-1 text-2xl font-semibold leading-tight">{match.time}</div>
-                        ) : null}
+                        <div className="text-2xl font-semibold leading-tight">
+                          {match.date}
+                          {match.time && (
+                            <span className="ml-3">{match.time}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
