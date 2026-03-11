@@ -198,7 +198,7 @@ const LandingPage = () => {
         const supabase = getSupabaseClient();
         const { data, error } = await supabase
           .from("events")
-          .select("id, title, date, time, location, is_active, event_type")
+          .select("id, title, date, time, location, is_active, event_type, extra, home_team_id, away_team_id, home_team:home_team_id(id, name, logo_url), away_team:away_team_id(id, name, logo_url)")
           .eq("is_active", true)
           .order("date", { ascending: true });
         if (error) throw error;
@@ -472,14 +472,51 @@ const LandingPage = () => {
                     : 'rounded-lg border border-slate-200 bg-white px-5 py-4'}
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                    <h4 className={`text-lg font-semibold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      <span aria-hidden="true">🏏</span>
-                      <span>{match.title}</span>
-                    </h4>
-                    <div className={theme === 'dark' ? 'text-sm text-slate-300' : 'text-sm text-slate-600'}>
-                      {t[lang].dateLabel}: {match.date}
-                      {match.time ? ` • ${t[lang].timeLabel}: ${match.time}` : ''}
-                      {match.location ? ` • ${t[lang].locationLabel}: ${match.location}` : ''}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={match.away_team?.logo_url || match.extra?.awayLogoUrl || logoImg}
+                        alt={match.away_team?.name ? `${match.away_team.name} logo` : match.extra?.awayTeam ? `${match.extra.awayTeam} logo` : 'Away team logo'}
+                        className="h-9 w-9 rounded-full border border-slate-300/40 bg-white object-contain p-1"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = logoImg;
+                        }}
+                      />
+                      <h4 className={`text-lg font-semibold flex items-center gap-2 min-w-0 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        <span className="truncate">{match.title}</span>
+                      </h4>
+                      <img
+                        src={match.home_team?.logo_url || match.extra?.homeLogoUrl || logoImg}
+                        alt={match.home_team?.name ? `${match.home_team.name} logo` : match.extra?.homeTeam ? `${match.extra.homeTeam} logo` : 'Home team logo'}
+                        className="h-9 w-9 rounded-full border border-slate-300/40 bg-white object-contain p-1"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = logoImg;
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                      <span
+                        className={theme === 'dark'
+                          ? 'inline-flex items-center rounded-full bg-indigo-500/20 px-3 py-1 text-sm font-semibold text-indigo-200 ring-1 ring-indigo-400/40'
+                          : 'inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-300'}
+                      >
+                        {t[lang].dateLabel}: {match.date}
+                      </span>
+                      {match.time ? (
+                        <span
+                          className={theme === 'dark'
+                            ? 'inline-flex items-center rounded-full bg-emerald-500/20 px-3 py-1 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-400/40'
+                            : 'inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-300'}
+                        >
+                          {t[lang].timeLabel}: {match.time}
+                        </span>
+                      ) : null}
+                      {match.location ? (
+                        <span className={theme === 'dark' ? 'text-sm text-slate-300' : 'text-sm text-slate-600'}>
+                          {t[lang].locationLabel}: {match.location}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -716,21 +753,21 @@ const LandingPage = () => {
                   {
                     name: 'Thomas Lorenzen',
                     role: lang === 'da' ? 'Formand' : 'Chairman',
-                    email: 'thomas_acc@hotmail.com',
+                    email: 'thomas@aalborg-cricket.dk',
                     phone: '+45 60 50 78 55',
                     image: new URL('./images/board/profile.png', import.meta.url).href,
                   },
                   {
                     name: 'Jan Anker Nielsen',
                     role: lang === 'da' ? 'Kasserer' : 'Treasurer',
-                    email: 'jananker@mp.aau.dk',
+                    email: 'jananker@aalborg-cricket.dk',
                     phone: '+45 29 10 37 41',
                     image: new URL('./images/board/profile.png', import.meta.url).href,
                   },
                   {
                     name: 'Qendrim Nika',
                     role: lang === 'da' ? 'Næstformand' : 'Vice Chairman',
-                    email: 'niika-rabor@hotmail.com',
+                    email: 'qendrim@aalborg-cricket.dk',
                     phone: '+45 22 86 20 48',
                     image: new URL('./images/board/qn.png', import.meta.url).href,
                   },
@@ -893,11 +930,3 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
-
-// About text for Aalborg Cricket Club (Danish and English)
-// Danish:
-// Siden 2013 har Aalborg Cricket Club befundet sig i det nye arealer på Dyrskuepladsen. Deltagelsen i 2. Division Nord har været et stor succes og med mange cricket sejr til klubben, hvor man blandt andet stillede med 2 hold. I 2015 fik klubben mulighed for at prøve kræfter med hold i 1. Division og den mulighed valgte klubben at tage. En af grunde var, at der skulle være lidt mere udfordring for de aktive spiller fra Aalborg.
-// Man valgte ligeledes i 2015 at stille med kun 1 aktivt hold under DCF. Truppen og bestyrelsen består mest af nye spiller samt spiller fra Chang tiden. Klubben har haft fornøjelsen af tidligere spiller, som har hjulpet i tilfælde af klubben ikke kunne stille hold. Aalborg er 2. mest vindende by i Danmark gennem tiderne. 17 Senior DM guld er det blevet til. Aab 16 mesterskaber & Chang 1.
-// English:
-// Since 2013, Aalborg Cricket Club has been located at the new grounds at Dyrskuepladsen. Participation in the 2nd Division North has been a great success, with many cricket victories for the club, including fielding two teams. In 2015, the club had the opportunity to compete in the 1st Division, a challenge they chose to accept. One reason was to provide more challenge for the active players from Aalborg.
-// In 2015, the club also decided to field only one active team under DCF. The squad and board mainly consist of new players as well as players from the Chang era. The club has enjoyed the help of former players, who have stepped in when the club could not field a team. Aalborg is the second most winning city in Denmark throughout history, with 17 Senior Danish Championships: Aab with 16 titles & Chang with 1.

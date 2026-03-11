@@ -3,6 +3,8 @@ import translations from './lang';
 
 const ContactSection = ({ lang, theme }) => {
   const t = translations;
+  const phoneText = t[lang].phone;
+  const phoneHref = `tel:${phoneText.replace(/[^\d+]/g, '')}`;
   return (
     <section id="contact" className={theme === 'dark' ? 'py-16 bg-gray-950 text-white' : 'py-16 bg-gray-900 text-white'}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -42,14 +44,16 @@ const ContactSection = ({ lang, theme }) => {
             </div>
             <div className="flex flex-col md:flex-row md:items-center md:justify-center md:space-x-8 mb-4 mt-4 text-lg">
               <div className="flex flex-col md:flex-row md:items-center md:space-x-4 justify-center">
-                <span className="font-medium">{t[lang].phone}</span>
+                <a href={phoneHref} className="font-medium underline-offset-2 hover:underline">
+                  {phoneText}
+                </a>
                 <span className="hidden md:inline-block">|</span>
                 <span className="font-medium">{t[lang].email}</span>
               </div>
               <div className="flex flex-col md:flex-row md:items-center md:space-x-2 md:ml-8 mt-2 md:mt-0 justify-center">
                 <span className="font-semibold mr-2">{t[lang].followUs}</span>
-                <a href="https://www.facebook.com/aalborgcricketclub/" className="text-gray-300 hover:text-white transition-colors mr-2 text-2xl" aria-label="Facebook"><FaFacebook /></a>
-                <a href="https://www.instagram.com/explore/tags/aalborgcricketclub/" className="text-gray-300 hover:text-white transition-colors mr-2 text-2xl" aria-label="Instagram"><FaInstagram /></a>
+                <a href="https://www.facebook.com/aalborgcricketclub/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors mr-2 text-2xl" aria-label="Facebook"><FaFacebook /></a>
+                <a href="https://www.instagram.com/explore/tags/aalborgcricketclub/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors mr-2 text-2xl" aria-label="Instagram"><FaInstagram /></a>
               </div>
             </div>
           </div>

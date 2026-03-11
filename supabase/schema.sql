@@ -192,6 +192,67 @@ create table if not exists public.events (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.teams (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  address text,
+  logo_url text,
+  is_active boolean not null default true,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.teams enable row level security;
+
+drop policy if exists "teams_select_authenticated" on public.teams;
+create policy "teams_select_authenticated"
+on public.teams
+for select
+to authenticated
+using (public.is_admin_approved());
+
+drop policy if exists "teams_select_anon_active" on public.teams;
+create policy "teams_select_anon_active"
+on public.teams
+for select
+to anon
+using (is_active = true);
+
+drop policy if exists "teams_insert_authenticated" on public.teams;
+create policy "teams_insert_authenticated"
+on public.teams
+for insert
+to authenticated
+with check (public.is_admin_approved());
+
+drop policy if exists "teams_update_authenticated" on public.teams;
+create policy "teams_update_authenticated"
+on public.teams
+for update
+to authenticated
+using (public.is_admin_approved())
+with check (public.is_admin_approved());
+
+drop policy if exists "teams_delete_authenticated" on public.teams;
+create policy "teams_delete_authenticated"
+on public.teams
+for delete
+to authenticated
+using (public.is_admin_approved());
+
+alter table public.events
+  add column if not exists home_team_id uuid references public.teams(id) on delete set null;
+
+alter table public.events
+  add column if not exists away_team_id uuid references public.teams(id) on delete set null;
+
+drop index if exists idx_events_home_team_id;
+create index if not exists idx_events_home_team_id on public.events(home_team_id);
+
+drop index if exists idx_events_away_team_id;
+create index if not exists idx_events_away_team_id on public.events(away_team_id);
+
 alter table public.events enable row level security;
 
 -- Policies for events table
