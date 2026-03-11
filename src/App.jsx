@@ -503,7 +503,6 @@ function AdminPortalApp() {
     event.preventDefault();
     setError('');
     setMessage('');
-    // clear password-reset notices as well
     setForgotError('');
     setForgotMessage('');
 
@@ -879,26 +878,6 @@ function AdminPortalApp() {
               </nav>
             </div>
             <div className="flex items-center gap-3">
-              <label
-                className="hidden text-sm text-slate-300 sm:block"
-                htmlFor="year"
-              >
-                Year
-              </label>
-              <select
-                id="year"
-                value={selectedYear}
-                onChange={(event) =>
-                  setSelectedYear(Number(event.target.value))
-                }
-                className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
-              >
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
               <p className="hidden text-sm text-slate-300 sm:block">
                 Signed in as{' '}
                 <span className="font-medium text-white">
@@ -936,6 +915,26 @@ function AdminPortalApp() {
                     </p>
                   </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <label
+                  className="text-sm text-slate-300 sm:mr-2"
+                  htmlFor="year"
+                  style={{ minWidth: 48 }}
+                >
+                  Year
+                </label>
+                <select
+                  id="year"
+                  value={selectedYear}
+                  onChange={(event) => setSelectedYear(Number(event.target.value))}
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                  style={{ minWidth: 90 }}
+                >
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   value={playerSearch}
@@ -1310,34 +1309,6 @@ function AdminPortalApp() {
             <TeamManager onBack={() => setCurrentView('admin')} />
           ) : (
             <>
-              <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h1 className="text-xl font-semibold text-white">Players</h1>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Register players and manage membership and payment status for{' '}
-                      {selectedYear}.
-                    </p>
-                  </div>
-              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                <input
-                  type="text"
-                  value={playerSearch}
-                  onChange={(event) => setPlayerSearch(event.target.value)}
-                  placeholder="Search players..."
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400 sm:w-64"
-                />
-                <button
-                  type="button"
-                  onClick={openAddPlayerModal}
-                  className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
-                >
-                  Add player
-                </button>
-              </div>
-            </div>
-          </div>
-
           {dashboardError && (
             <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
               {dashboardError}
