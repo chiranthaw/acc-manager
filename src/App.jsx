@@ -1144,6 +1144,55 @@ function AdminPortalApp() {
                     </button>
                   </div>
                 </div>
+                {/* New Manage Events section */}
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white mb-2">Manage Events</h2>
+                      <p className="mb-3 text-sm text-slate-400">Add, edit, activate/deactivate, or delete club events and matches.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('events')}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                    >
+                      Manage Events
+                    </button>
+                  </div>
+                </div>
+                {/* New Manage News section */}
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white mb-2">Manage News</h2>
+                      <p className="mb-3 text-sm text-slate-400">Add, edit, activate/deactivate, or delete club news items.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('news')}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                    >
+                      Manage News
+                    </button>
+                  </div>
+                </div>
+                {/* New Manage Teams section */}
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white mb-2">Manage Teams</h2>
+                      <p className="mb-3 text-sm text-slate-400">Create and maintain team profiles with address and logo details.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('teams')}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                    >
+                      Manage Teams
+                    </button>
+                  </div>
+                </div>
+                {/* Admin Access section after Manage Teams */}
                 <div className="mt-6 border-t border-slate-800 pt-6">
                   <div>
                     <h2 className="text-lg font-semibold text-white">Admin Access</h2>
@@ -1249,54 +1298,6 @@ function AdminPortalApp() {
                         )}
                       </tbody>
                     </table>
-                  </div>
-                </div>
-                {/* New Manage Events section */}
-                <div className="mt-6 border-t border-slate-800 pt-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-white mb-2">Manage Events</h2>
-                      <p className="mb-3 text-sm text-slate-400">Add, edit, activate/deactivate, or delete club events and matches.</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentView('events')}
-                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
-                    >
-                      Manage Events
-                    </button>
-                  </div>
-                </div>
-                {/* New Manage News section */}
-                <div className="mt-6 border-t border-slate-800 pt-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-white mb-2">Manage News</h2>
-                      <p className="mb-3 text-sm text-slate-400">Add, edit, activate/deactivate, or delete club news items.</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentView('news')}
-                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
-                    >
-                      Manage News
-                    </button>
-                  </div>
-                </div>
-                {/* New Manage Teams section */}
-                <div className="mt-6 border-t border-slate-800 pt-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-white mb-2">Manage Teams</h2>
-                      <p className="mb-3 text-sm text-slate-400">Create and maintain team profiles with address and logo details.</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentView('teams')}
-                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
-                    >
-                      Manage Teams
-                    </button>
                   </div>
                 </div>
               </div>
