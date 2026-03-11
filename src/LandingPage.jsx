@@ -469,6 +469,14 @@ const LandingPage = () => {
                 const awayTeamName = match.away_team?.name || match.extra?.awayTeam || 'Away Team';
                 const homeLogo = match.home_team?.logo_url || match.extra?.homeLogoUrl || logoImg;
                 const awayLogo = match.away_team?.logo_url || match.extra?.awayLogoUrl || logoImg;
+                const competitionType = match.extra?.match_competition;
+                const competitionDisplay = competitionType === '1st_division'
+                  ? { main: '1', sub: 'st' }
+                  : competitionType === '3rd_division'
+                    ? { main: '3', sub: 'rd' }
+                    : competitionType === 't20'
+                      ? { main: 'T20', sub: null }
+                      : { main: 'Match', sub: null };
 
                 return (
                 <div
@@ -477,8 +485,19 @@ const LandingPage = () => {
                     ? 'rounded-lg border border-slate-700 bg-slate-900 px-5 py-4'
                     : 'rounded-lg border border-slate-200 bg-white px-5 py-4'}
                 >
-                  <div className="space-y-2">
-                    <h4 className={`text-xl font-semibold flex items-center gap-2 min-w-0 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  <div className="flex items-stretch gap-4">
+                    <div
+                      className={theme === 'dark'
+                        ? 'self-stretch inline-flex min-w-20 items-center justify-center rounded-md border border-amber-400/40 bg-amber-500/20 px-2 text-amber-200'
+                        : 'self-stretch inline-flex min-w-20 items-center justify-center rounded-md border border-amber-300 bg-amber-100 px-2 text-amber-800'}
+                    >
+                      <span className="flex flex-col items-center leading-none">
+                        <span className="text-4xl font-normal">{competitionDisplay.main}</span>
+                        {competitionDisplay.sub ? <span className="text-sm font-normal mt-0.5">{competitionDisplay.sub}</span> : null}
+                      </span>
+                    </div>
+                    <div className="flex-1 space-y-2 min-w-0">
+                      <h4 className={`text-xl font-semibold flex items-center gap-2 min-w-0 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       <span className="inline-flex items-center gap-2 min-w-0">
                         <img
                           src={homeLogo}
@@ -509,8 +528,8 @@ const LandingPage = () => {
                           {t[lang].locationLabel}: {match.location}
                         </span>
                       ) : null}
-                    </h4>
-                    <div className="flex flex-wrap items-center gap-2">
+                      </h4>
+                      <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={theme === 'dark'
                           ? 'inline-flex items-center rounded-full bg-indigo-500/20 px-3 py-1 text-sm font-semibold text-indigo-200 ring-1 ring-indigo-400/40'
@@ -527,6 +546,7 @@ const LandingPage = () => {
                           {t[lang].timeLabel}: {match.time}
                         </span>
                       ) : null}
+                      </div>
                     </div>
                   </div>
                 </div>
