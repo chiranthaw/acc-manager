@@ -5,6 +5,7 @@ import logoImg from './images/acc-logo-new.png';
 import LandingPage from './LandingPage';
 import EventManager from './EventManager';
 import NewsManager from './NewsManager';
+import TeamManager from './TeamManager';
 import NewsDetail from './NewsDetail';
 
 const MEMBERSHIP_OPTIONS = [
@@ -61,7 +62,7 @@ function AdminPortalApp() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   // admin section states
-  const [currentView, setCurrentView] = useState('admin'); // 'players' or 'admin'
+  const [currentView, setCurrentView] = useState('admin'); // 'admin' | 'events' | 'news' | 'teams' | 'players'
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailSubject, setEmailSubject] = useState('ACC Membership - Payment Reminder');
   const [emailBody, setEmailBody] = useState(
@@ -1257,12 +1258,30 @@ function AdminPortalApp() {
                     </button>
                   </div>
                 </div>
+                {/* New Manage Teams section */}
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white mb-2">Manage Teams</h2>
+                      <p className="mb-3 text-sm text-slate-400">Create and maintain team profiles with address and logo details.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('teams')}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                    >
+                      Manage Teams
+                    </button>
+                  </div>
+                </div>
               </div>
             </>
           ) : currentView === 'events' ? (
-            <EventManager />
+            <EventManager onBack={() => setCurrentView('admin')} />
           ) : currentView === 'news' ? (
-            <NewsManager />
+            <NewsManager onBack={() => setCurrentView('admin')} />
+          ) : currentView === 'teams' ? (
+            <TeamManager onBack={() => setCurrentView('admin')} />
           ) : (
             <>
               <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
