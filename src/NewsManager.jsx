@@ -153,8 +153,32 @@ function NewsManager({ onBack }) {
                   <td className="px-4 py-3 text-slate-300">{item.date}</td>
                   <td className="px-4 py-3 text-slate-300">{item.is_active ? 'Yes' : 'No'}</td>
                   <td className="px-4 py-3 flex gap-2">
-                    <button onClick={() => openEditModal(item)} className="text-indigo-400 hover:underline">Edit</button>
-                    <button onClick={() => handleDelete(item.id)} className="text-rose-400 hover:underline">Delete</button>
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(item)}
+                      aria-label="Edit news"
+                      title="Edit"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 text-indigo-400 transition hover:border-slate-500 hover:text-white"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(item.id)}
+                      aria-label="Delete news"
+                      title="Delete"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-600/60 text-rose-400 transition hover:border-rose-500 hover:text-rose-100"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 6V4h8v2" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 6l-1 14H6L5 6" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 10v7M14 10v7" />
+                      </svg>
+                    </button>
                   </td>
                 </tr>
               ))}

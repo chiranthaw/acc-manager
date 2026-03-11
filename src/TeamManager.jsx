@@ -180,17 +180,33 @@ export default function TeamManager({ onBack }) {
                       <button
                         type="button"
                         onClick={() => handleEditTeam(team)}
-                        className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-200 transition hover:border-slate-500 hover:text-white"
+                        aria-label="Edit team"
+                        title="Edit"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 text-slate-200 transition hover:border-slate-500 hover:text-white"
                       >
-                        Edit
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z" />
+                        </svg>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDeleteTeam(team.id)}
                         disabled={deletingTeamId === team.id}
-                        className="rounded-lg border border-rose-600/60 px-3 py-1.5 text-xs text-rose-200 transition hover:border-rose-500 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        aria-label="Delete team"
+                        title="Delete"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-600/60 text-rose-200 transition hover:border-rose-500 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {deletingTeamId === team.id ? 'Deleting...' : 'Delete'}
+                        {deletingTeamId === team.id ? (
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 6V4h8v2" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 6l-1 14H6L5 6" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 10v7M14 10v7" />
+                          </svg>
+                        )}
                       </button>
                     </div>
                   </td>
