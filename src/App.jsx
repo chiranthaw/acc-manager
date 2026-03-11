@@ -6,6 +6,7 @@ import LandingPage from './LandingPage';
 import EventManager from './EventManager';
 import NewsManager from './NewsManager';
 import TeamManager from './TeamManager';
+import ActivityManager from './ActivityManager';
 import NewsDetail from './NewsDetail';
 
 const MEMBERSHIP_OPTIONS = [
@@ -1191,6 +1192,22 @@ function AdminPortalApp() {
                     </button>
                   </div>
                 </div>
+                {/* New Manage Activities section */}
+                <div className="mt-6 border-t border-slate-800 pt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white mb-2">Manage Activities</h2>
+                      <p className="mb-3 text-sm text-slate-400">Add, edit, or delete club activities and images.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('activities')}
+                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                    >
+                      Manage Activities
+                    </button>
+                  </div>
+                </div>
                 {/* Admin Access section after Manage Teams */}
                 <div className="mt-6 border-t border-slate-800 pt-6">
                   <div>
@@ -1307,6 +1324,8 @@ function AdminPortalApp() {
             <NewsManager onBack={() => setCurrentView('admin')} />
           ) : currentView === 'teams' ? (
             <TeamManager onBack={() => setCurrentView('admin')} />
+          ) : currentView === 'activities' ? (
+            <ActivityManager onBack={() => setCurrentView('admin')} />
           ) : (
             <>
           {dashboardError && (

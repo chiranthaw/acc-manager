@@ -1,3 +1,53 @@
+-- Activities table for dynamic club activities
+create table if not exists public.activities (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  image_url text,
+  is_active boolean not null default true,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.activities enable row level security;
+
+-- Policies for activities table
+drop policy if exists "activities_select_authenticated" on public.activities;
+create policy "activities_select_authenticated"
+on public.activities
+for select
+to authenticated
+using (public.is_admin_approved());
+
+drop policy if exists "activities_select_anon_active" on public.activities;
+create policy "activities_select_anon_active"
+on public.activities
+for select
+to anon
+using (is_active = true);
+
+drop policy if exists "activities_insert_authenticated" on public.activities;
+create policy "activities_insert_authenticated"
+on public.activities
+for insert
+to authenticated
+with check (public.is_admin_approved());
+
+drop policy if exists "activities_update_authenticated" on public.activities;
+create policy "activities_update_authenticated"
+on public.activities
+for update
+to authenticated
+using (public.is_admin_approved())
+with check (public.is_admin_approved());
+
+drop policy if exists "activities_delete_authenticated" on public.activities;
+create policy "activities_delete_authenticated"
+on public.activities
+for delete
+to authenticated
+using (public.is_admin_approved());
 create extension if not exists pgcrypto;
 
 create table if not exists public.admin_users (
