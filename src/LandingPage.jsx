@@ -496,56 +496,50 @@ const LandingPage = () => {
                         {competitionDisplay.sub ? <span className="text-sm font-normal mt-0.5">{competitionDisplay.sub}</span> : null}
                       </span>
                     </div>
-                    <div className="flex-1 space-y-2 min-w-0">
-                      <h4 className={`text-xl font-semibold flex items-center gap-2 min-w-0 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      <span className="inline-flex items-center gap-2 min-w-0">
-                        <img
-                          src={homeLogo}
-                          alt={`${homeTeamName} logo`}
-                          className="h-11 w-11 rounded-full border border-slate-300/40 bg-white object-contain p-1"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = logoImg;
-                          }}
-                        />
-                        <span className="truncate">{homeTeamName}</span>
-                      </span>
-                      <span className="text-slate-400">vs.</span>
-                      <span className="inline-flex items-center gap-2 min-w-0">
-                        <img
-                          src={awayLogo}
-                          alt={`${awayTeamName} logo`}
-                          className="h-11 w-11 rounded-full border border-slate-300/40 bg-white object-contain p-1"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = logoImg;
-                          }}
-                        />
-                        <span className="truncate">{awayTeamName}</span>
-                      </span>
-                      {match.location ? (
-                        <span className={theme === 'dark' ? 'ml-3 text-sm font-normal text-slate-300' : 'ml-3 text-sm font-normal text-slate-600'}>
-                          {t[lang].locationLabel}: {match.location}
+                    <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="space-y-2 min-w-0">
+                        <h4 className={`text-xl font-semibold flex items-center gap-2 min-w-0 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        <span className="inline-flex items-center gap-2 min-w-0">
+                          <img
+                            src={homeLogo}
+                            alt={`${homeTeamName} logo`}
+                            className="h-11 w-11 rounded-full border border-slate-300/40 bg-white object-cover"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = logoImg;
+                            }}
+                          />
+                          <span className="truncate">{homeTeamName}</span>
                         </span>
-                      ) : null}
-                      </h4>
-                      <div className="flex flex-wrap items-center gap-2">
-                      <span
+                        <span className="text-slate-400">vs.</span>
+                        <span className="inline-flex items-center gap-2 min-w-0">
+                          <img
+                            src={awayLogo}
+                            alt={`${awayTeamName} logo`}
+                            className="h-11 w-11 rounded-full border border-slate-300/40 bg-white object-cover"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = logoImg;
+                            }}
+                          />
+                          <span className="truncate">{awayTeamName}</span>
+                        </span>
+                        </h4>
+                        {match.location ? (
+                          <div className={theme === 'dark' ? 'text-sm font-normal text-slate-300' : 'text-sm font-normal text-slate-600'}>
+                            {t[lang].locationLabel}: {match.location}
+                          </div>
+                        ) : null}
+                      </div>
+                      <div
                         className={theme === 'dark'
-                          ? 'inline-flex items-center rounded-full bg-indigo-500/20 px-3 py-1 text-sm font-semibold text-indigo-200 ring-1 ring-indigo-400/40'
-                          : 'inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-800 ring-1 ring-indigo-300'}
+                          ? 'shrink-0 rounded-md border border-indigo-300/60 bg-indigo-500/20 px-4 py-2 text-right text-white shadow-sm'
+                          : 'shrink-0 rounded-md border border-indigo-300 bg-indigo-100 px-4 py-2 text-right text-indigo-950 shadow-sm'}
                       >
-                        {t[lang].dateLabel}: {match.date}
-                      </span>
-                      {match.time ? (
-                        <span
-                          className={theme === 'dark'
-                            ? 'inline-flex items-center rounded-full bg-emerald-500/20 px-3 py-1 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-400/40'
-                            : 'inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-300'}
-                        >
-                          {t[lang].timeLabel}: {match.time}
-                        </span>
-                      ) : null}
+                        <div className="text-2xl font-semibold leading-tight">{match.date}</div>
+                        {match.time ? (
+                          <div className="mt-1 text-2xl font-semibold leading-tight">{match.time}</div>
+                        ) : null}
                       </div>
                     </div>
                   </div>
