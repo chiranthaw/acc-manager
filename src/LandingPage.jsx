@@ -170,7 +170,7 @@ const LandingPage = () => {
 
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
-          to: 'info@aalborg-cricket.dk',
+          to: 'ACC Manager <onboarding@resend.dev>',
           subject: `New Membership Inquiry from ${contactForm.name}`,
           html: htmlContent,
         },
@@ -228,7 +228,9 @@ const LandingPage = () => {
                 className="h-12 w-auto"
                 style={theme === 'dark' ? { filter: 'brightness(0) invert(1)' } : {}}
               />
-              <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t[lang].clubName.toUpperCase()}</h1>
+              <Link to="/" className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} hover:text-green-500 transition`} style={{ textDecoration: 'none' }}>
+                {t[lang].clubName.toUpperCase()}
+              </Link>
             </div>
             <nav className="hidden md:flex space-x-8">
               <a href="#about" className={theme === 'dark' ? 'text-gray-300 hover:text-green-300 transition-colors' : 'text-gray-700 hover:text-green-600 transition-colors'}>{t[lang].about}</a>
@@ -335,7 +337,7 @@ const LandingPage = () => {
               {t[lang].accessAdmin}
             </Link>
             <a
-              href="#contact"
+              href="#become-member-section"
               className={theme === 'dark' ? 'border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-700 transition-colors' : 'border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors'}
             >
               {t[lang].getInTouch}
