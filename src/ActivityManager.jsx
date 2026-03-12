@@ -65,6 +65,21 @@ export default function ActivityManager({ onBack }) {
     }
   }
 
+  async function handleDeleteActivity(id) {
+    setError('');
+    try {
+      const supabase = getSupabaseClient();
+      const { error: deleteError } = await supabase
+        .from('activities')
+        .delete()
+        .eq('id', id);
+      if (deleteError) throw deleteError;
+      await fetchActivities();
+    } catch (err) {
+      setError(err.message || 'Failed to delete activity.');
+    }
+  }
+
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
       <div className="flex items-center justify-between mb-4">
@@ -127,10 +142,18 @@ export default function ActivityManager({ onBack }) {
                 {activity.image_url && (
                   <img src={activity.image_url} alt={activity.name} className="h-16 w-16 object-cover rounded" />
                 )}
-                <div>
+                <div className="flex-1">
                   <h3 className="text-base font-semibold text-white">{activity.name}</h3>
                   <p className="text-sm text-slate-300">{activity.description}</p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteActivity(activity.id)}
+                  className="rounded-lg border border-rose-600 px-3 py-1.5 text-xs text-rose-200 transition hover:border-rose-500 hover:text-rose-100"
+                  title="Delete activity"
+                >
+                  Delete
+                </button>
               </li>
             ))}
           </ul>
