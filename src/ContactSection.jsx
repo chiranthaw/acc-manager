@@ -16,7 +16,7 @@ const ContactSection = ({ lang, theme }) => {
           <div>
             <h4 className="text-xl font-semibold mb-4">{t[lang].contactInfo}</h4>
             <div className="mb-6">
-              <div className="grid grid-cols-4 gap-4 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                 {t[lang].addressBoxes.map((box, idx) => (
                   <div
                     key={idx}
