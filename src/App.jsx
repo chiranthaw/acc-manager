@@ -755,11 +755,9 @@ function AdminPortalApp() {
         const supabase = getSupabaseClient();
         if (!supabase) throw new Error('Supabase client not initialized');
 
-        // Convert plain text to HTML (preserve line breaks)
-        const htmlBody = emailBody
-          .split('\n')
-          .map((line) => `<p>${line.trim() || '&nbsp;'}</p>`)
-          .join('');
+        const amountDue = Number(player.amountDue || 0);
+        const amountPaid = Number(player.amountPaid || 0);
+        const balanceDue = Math.max(0, amountDue - amountPaid);
 
         const { error: emailError } = await supabase.functions.invoke(
           'send-email',
@@ -767,8 +765,15 @@ function AdminPortalApp() {
             body: {
               to: player.email,
               subject: emailSubject,
-              html: htmlBody,
-              playerName: player.fullName,
+              templateType: 'payment_reminder',
+              templateVariables: {
+                PLAYER_NAME: player.fullName,
+                EMAIL_BODY: emailBody,
+                AMOUNT_DUE: amountDue,
+                AMOUNT_PAID: amountPaid,
+                BALANCE_DUE: balanceDue,
+                SEASON_YEAR: selectedYear,
+              },
             },
           },
         );

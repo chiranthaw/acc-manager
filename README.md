@@ -27,8 +27,34 @@ After login, the home page shows:
 - `npm run build` to create production build
 - `npm run preview` to preview the production build
 
-## Update SUperbase send-mail
+## Update Supabase send-email function
 
- - npx supabase login
+- npx supabase login
+- npx supabase functions deploy send-email --no-verify-jwt
 
- - npx supabase functions deploy send-email --no-verify-jwt
+### Resend template setup
+
+Create and publish two templates in your Resend dashboard, then set these Supabase function secrets:
+
+- RESEND_API_KEY
+- RESEND_FROM (example: ACC Manager <noreply@yourdomain.com>)
+- RESEND_TEMPLATE_MEMBERSHIP_INQUIRY (template id or alias)
+- RESEND_TEMPLATE_PAYMENT_REMINDER (template id or alias)
+
+Set secrets:
+
+- npx supabase secrets set RESEND_API_KEY="re_xxx"
+- npx supabase secrets set RESEND_FROM="ACC Manager <noreply@yourdomain.com>"
+- npx supabase secrets set RESEND_TEMPLATE_MEMBERSHIP_INQUIRY="tmpl_membership_inquiry"
+- npx supabase secrets set RESEND_TEMPLATE_PAYMENT_REMINDER="tmpl_payment_reminder"
+
+Deploy after updating secrets:
+
+- npx supabase functions deploy send-email --no-verify-jwt
+
+Template variables expected by this app:
+
+- New Membership Inquiry template variables:
+	INQUIRY_NAME, INQUIRY_PHONE, INQUIRY_MESSAGE, SUBMITTED_AT
+- Payment Reminder template variables:
+	PLAYER_NAME, EMAIL_BODY, AMOUNT_DUE, AMOUNT_PAID, BALANCE_DUE, SEASON_YEAR

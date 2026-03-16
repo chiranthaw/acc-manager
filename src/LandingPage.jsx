@@ -161,18 +161,16 @@ const LandingPage = () => {
         throw new Error('Supabase not configured');
       }
 
-      const htmlContent = `
-        <p><strong>Name:</strong> ${contactForm.name}</p>
-        <p><strong>Phone:</strong> ${contactForm.phone}</p>
-        <p><strong>Message:</strong></p>
-        <p>${contactForm.message.replace(/\n/g, '<br>')}</p>
-      `;
-
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
-          to: 'ACC Manager <onboarding@resend.dev>',
+          to: 'Aalborg Cricket Club <info@aalborg-cricket.dk>',
           subject: `New Membership Inquiry from ${contactForm.name}`,
-          html: htmlContent,
+          templateType: 'membership_inquiry',
+          templateVariables: {
+            CONTACT_NAME: contactForm.name,
+            CONTACT_PHONE: contactForm.phone,
+            MESSAGE: contactForm.message,
+          },
         },
       });
 
