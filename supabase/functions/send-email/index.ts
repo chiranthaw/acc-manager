@@ -29,12 +29,7 @@ const requiredTemplateVariablesByType: Record<TemplateType, string[]> = {
     'MESSAGE'
   ],
   payment_reminder: [
-    'PLAYER_NAME',
-    'EMAIL_BODY',
-    'AMOUNT_DUE',
-    'AMOUNT_PAID',
-    'BALANCE_DUE',
-    'SEASON_YEAR',
+    'NAME'
   ],
 };
 

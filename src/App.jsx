@@ -65,10 +65,6 @@ function AdminPortalApp() {
   // admin section states
   const [currentView, setCurrentView] = useState('admin'); // 'admin' | 'events' | 'news' | 'teams' | 'players'
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-  const [emailSubject, setEmailSubject] = useState('ACC Membership - Payment Reminder');
-  const [emailBody, setEmailBody] = useState(
-    'This is a friendly reminder that you have outstanding payments for your ACC membership for the current season.\n\nPlease arrange payment at your earliest convenience.\n\nThank you for your attention to this matter.',
-  );
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
@@ -738,11 +734,6 @@ function AdminPortalApp() {
       return;
     }
 
-    if (!emailSubject.trim() || !emailBody.trim()) {
-      setEmailError('Subject and body cannot be empty.');
-      return;
-    }
-
     setEmailLoading(true);
     try {
       // Filter to only send to selected players
@@ -764,11 +755,9 @@ function AdminPortalApp() {
           {
             body: {
               to: player.email,
-              subject: emailSubject,
               templateType: 'payment_reminder',
               templateVariables: {
-                PLAYER_NAME: player.fullName,
-                EMAIL_BODY: emailBody,
+                NAME: player.fullName,
                 AMOUNT_DUE: amountDue,
                 AMOUNT_PAID: amountPaid,
                 BALANCE_DUE: balanceDue,
@@ -1522,24 +1511,6 @@ function AdminPortalApp() {
                 onSubmit={e => { e.preventDefault(); handleSendEmails(); }}
                 className="space-y-4"
               >
-                <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-1">Subject</label>
-                  <input
-                    type="text"
-                    value={emailSubject}
-                    onChange={e => setEmailSubject(e.target.value)}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-200 mb-1">Body</label>
-                  <textarea
-                    value={emailBody}
-                    onChange={e => setEmailBody(e.target.value)}
-                    rows={6}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                  />
-                </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">Select Players</label>
                   <div className="max-h-40 overflow-y-auto rounded border border-slate-700 bg-slate-950 p-2">
