@@ -136,6 +136,31 @@ const LandingPage = () => {
     })
     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
+  const formatMatchDateParts = (dateValue) => {
+    if (!dateValue || typeof dateValue !== 'string') {
+      return { day: '--', month: '--' };
+    }
+
+    const dateParts = dateValue.split('-').map((part) => Number(part));
+    if (dateParts.length !== 3 || dateParts.some((part) => Number.isNaN(part))) {
+      return { day: dateValue, month: '' };
+    }
+
+    const [year, month, day] = dateParts;
+    const parsedDate = new Date(year, month - 1, day);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return { day: dateValue, month: '' };
+    }
+
+    const locale = lang === 'da' ? 'da-DK' : 'en-GB';
+    const monthLabel = new Intl.DateTimeFormat(locale, { month: 'short' }).format(parsedDate);
+
+    return {
+      day: String(day),
+      month: monthLabel,
+    };
+  };
+
   const canGoPrev = eventStartIdx > 0;
   const canGoNext = eventStartIdx + 3 < sortedEvents.length;
   const handlePrev = () => {
@@ -469,6 +494,7 @@ const LandingPage = () => {
                 const awayTeamName = match.away_team?.name || match.extra?.awayTeam || 'Away Team';
                 const homeLogo = match.home_team?.logo_url || match.extra?.homeLogoUrl || logoImg;
                 const awayLogo = match.away_team?.logo_url || match.extra?.awayLogoUrl || logoImg;
+                const matchDate = formatMatchDateParts(match.date);
                 const competitionType = match.extra?.match_competition;
                 const competitionDisplay = competitionType === '1st_division'
                   ? { main: '1', sub: 'st' }
@@ -485,18 +511,16 @@ const LandingPage = () => {
                     ? 'rounded-lg border border-slate-700 bg-slate-900 px-5 py-4'
                     : 'rounded-lg border border-slate-200 bg-white px-5 py-4'}
                 >
-                  <div className="flex items-stretch gap-4">
+                  <div className="flex items-stretch gap-3">
                     <div
                       className={theme === 'dark'
-                        ? 'self-stretch inline-flex min-w-20 items-center justify-center rounded-md border border-amber-400/40 bg-amber-500/20 px-2 text-amber-200'
-                        : 'self-stretch inline-flex min-w-20 items-center justify-center rounded-md border border-amber-300 bg-amber-100 px-2 text-amber-800'}
+                        ? 'shrink-0 rounded-md border border-indigo-300/60 bg-indigo-500/20 px-3 py-1.5 text-right text-white shadow-sm'
+                        : 'shrink-0 rounded-md border border-indigo-300 bg-indigo-100 px-3 py-1.5 text-right text-indigo-950 shadow-sm'}
                     >
-                      <span className="flex flex-col items-center leading-none">
-                        <span className="text-4xl font-normal">{competitionDisplay.main}</span>
-                        {competitionDisplay.sub ? <span className="text-sm font-normal mt-0.5">{competitionDisplay.sub}</span> : null}
-                      </span>
+                      <div className="text-4xl sm:text-5xl font-semibold leading-none">{matchDate.day}</div>
+                      <div className="mt-0.5 text-sm sm:text-base uppercase tracking-wide leading-none">{matchDate.month}</div>
                     </div>
-                    <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="flex-1 min-w-0">
                       <div className="space-y-2 min-w-0">
                         <h4 className={`text-xl font-semibold flex items-center gap-2 min-w-0 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         <span className="inline-flex items-center gap-2 min-w-0">
@@ -531,17 +555,17 @@ const LandingPage = () => {
                           </div>
                         ) : null}
                       </div>
+                    </div>
+                    <div className="shrink-0 flex items-start">
                       <div
                         className={theme === 'dark'
-                          ? 'shrink-0 rounded-md border border-indigo-300/60 bg-indigo-500/20 px-4 py-2 text-right text-white shadow-sm'
-                          : 'shrink-0 rounded-md border border-indigo-300 bg-indigo-100 px-4 py-2 text-right text-indigo-950 shadow-sm'}
+                          ? 'inline-flex min-w-20 items-center justify-center rounded-md border border-amber-400/40 bg-amber-500/20 px-2 py-1 text-amber-200'
+                          : 'inline-flex min-w-20 items-center justify-center rounded-md border border-amber-300 bg-amber-100 px-2 py-1 text-amber-800'}
                       >
-                        <div className="text-2xl font-semibold leading-tight">
-                          {match.date}
-                          {match.time && (
-                            <span className="ml-3">{match.time}</span>
-                          )}
-                        </div>
+                        <span className="flex flex-col items-center leading-none">
+                          <span className="text-4xl font-normal">{competitionDisplay.main}</span>
+                          {competitionDisplay.sub ? <span className="text-sm font-normal mt-0.5">{competitionDisplay.sub}</span> : null}
+                        </span>
                       </div>
                     </div>
                   </div>
