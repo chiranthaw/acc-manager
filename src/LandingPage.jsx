@@ -514,10 +514,10 @@ const LandingPage = () => {
                   <div className="flex items-stretch gap-3">
                     <div
                       className={theme === 'dark'
-                        ? 'shrink-0 rounded-md border border-indigo-300/60 bg-indigo-500/20 px-3 py-1.5 text-right text-white shadow-sm'
-                        : 'shrink-0 rounded-md border border-indigo-300 bg-indigo-100 px-3 py-1.5 text-right text-indigo-950 shadow-sm'}
+                        ? 'shrink-0 mr-8 w-24 sm:w-28 rounded-md border border-indigo-300/60 bg-indigo-500/20 px-3 py-1.5 text-center text-white shadow-sm'
+                        : 'shrink-0 mr-8 w-24 sm:w-28 rounded-md border border-indigo-300 bg-indigo-100 px-3 py-1.5 text-center text-indigo-950 shadow-sm'}
                     >
-                      <div className="text-4xl sm:text-5xl font-semibold leading-none">{matchDate.day}</div>
+                      <div className="text-4xl sm:text-5xl font-semibold leading-none tabular-nums">{matchDate.day}</div>
                       <div className="mt-0.5 text-sm sm:text-base uppercase tracking-wide leading-none">{matchDate.month}</div>
                     </div>
                     <div className="flex-1 min-w-0">

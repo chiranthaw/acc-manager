@@ -85,7 +85,7 @@ const translations = {
     dark: '🌙 Dark',
     lang: 'Dansk',
     boardTitle: 'Board',
-    boardDescription: "ACC's statutes from the founding general meeting in 2000. Note! Voting rights at the general meeting – only paying members. The financial year follows the calendar year. Statutes for Aalborg Cricket Club.",  },
+    boardDescription: "ACC's statutes from the founding general meeting in 2000. Note! Voting rights at the general meeting – only paying members. The financial year follows the calendar year.",  },
     statutesText: 'Read statutes',
   da: {
     clubName: 'Aalborg Cricket Klub',
