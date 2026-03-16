@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from './lib/supabase';
 
-// Event schema reference:
-// id, title, description, event_type, date, time, location, image_url, is_active, extra, created_by, created_at, updated_at
-
 const EVENT_TYPES = [
   { value: 'match', label: 'Match' },
   { value: 'training', label: 'Training' },
@@ -26,7 +23,6 @@ export default function EventManager({ onBack }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
 
-  // Form state
   const [form, setForm] = useState({
     title: '',
     description: '',

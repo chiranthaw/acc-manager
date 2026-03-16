@@ -1,4 +1,4 @@
-import { FaFacebook, FaInstagram, FaYoutube } from 'react-icons/fa';
+import { FaFacebook, FaInstagram } from 'react-icons/fa';
 import translations from './lang';
 
 const ContactSection = ({ lang, theme }) => {

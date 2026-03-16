@@ -18,7 +18,6 @@ import ActivityCarousel from './ActivityCarousel';
 import { getSupabaseClient } from './lib/supabase';
 
 const LandingPage = () => {
-  // Theme state: 'dark' | 'light'
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('theme') || 'dark';
@@ -26,7 +25,6 @@ const LandingPage = () => {
     return 'dark';
   });
 
-  // Language state: 'en' | 'da'
   const [lang, setLang] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('lang') || 'en';
@@ -48,14 +46,13 @@ const LandingPage = () => {
     localStorage.setItem('lang', lang);
   }, [lang]);
 
-  // Scroll to #news if hash is present
   useEffect(() => {
     if (window.location.hash === '#news') {
       const el = document.getElementById('news');
       if (el) {
         setTimeout(() => {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100); // Delay to ensure DOM is ready
+        }, 100);
       }
     }
   }, []);
@@ -84,7 +81,7 @@ const LandingPage = () => {
   const [news, setNews] = useState([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState("");
-  const [selectedNews, setSelectedNews] = useState(null);
+  
   useEffect(() => {
     async function fetchNews() {
       setNewsLoading(true);
