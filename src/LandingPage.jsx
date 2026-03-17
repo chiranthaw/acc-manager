@@ -689,6 +689,7 @@ const LandingPage = () => {
       {/* Board Section */}
       <BoardSection theme={theme} lang={lang} t={t} />
 
+      {/* Contact Us Modal */}
       <ContactModal
         show={showContactModal}
         theme={theme}
