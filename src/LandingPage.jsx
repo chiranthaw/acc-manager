@@ -16,6 +16,7 @@ import ContactSection from './ContactSection';
 import SponsorsSection from './SponsorsSection';
 import ActivityCarousel from './ActivityCarousel';
 import SchoolCricketSection from './SchoolCricketSection';
+import UpcomingEventsSection from './UpcomingEventsSection';
 import { getSupabaseClient } from './lib/supabase';
 
 const LandingPage = () => {
@@ -582,99 +583,24 @@ const LandingPage = () => {
         links={schoolCricketLinks}
       />
 
-      {/* Events Section */}
-      <section id="events" className={theme === 'dark' ? 'py-16 bg-gray-900' : 'py-16 bg-white'}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h3 className={`text-3xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t[lang].eventsTitle}</h3>
-            <p className={theme === 'dark' ? 'text-gray-300 text-lg' : 'text-gray-600 text-lg'}>{t[lang].eventsDesc}</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {eventsLoading ? (
-              <div className="col-span-3 text-center text-slate-400">Loading events...</div>
-            ) : eventsError ? (
-              <div className="col-span-3 text-center text-rose-400">{eventsError}</div>
-            ) : events.length === 0 ? (
-              <div className="col-span-3 text-center text-slate-400">No upcoming events.</div>
-            ) : (
-              <>
-                <div className="col-span-3 flex items-center justify-center">
-                  {/* Left arrow */}
-                  <button
-                    onClick={handlePrev}
-                    disabled={!canGoPrev}
-                    className={`group p-3 mr-4 rounded-full border-2 shadow-lg bg-white dark:bg-gray-800 border-green-400 dark:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all duration-200 flex items-center justify-center ${canGoPrev ? 'hover:bg-green-100 dark:hover:bg-gray-700' : 'opacity-40 cursor-not-allowed'}`}
-                    aria-label="Previous events"
-                    style={{ alignSelf: 'center' }}
-                  >
-                    {/* Left chevron SVG */}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-7 h-7 text-green-600 dark:text-green-300 group-hover:text-green-800 dark:group-hover:text-green-200">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                    </svg>
-                  </button>
-                  {/* Events cards grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1">
-                    {visibleEvents.map((event) => {
-                      // Icon selection based on event_type
-                      let icon = '📅';
-                      switch ((event.event_type || '').toLowerCase()) {
-                        case 'match':
-                          icon = '🏏';
-                          break;
-                        case 'training':
-                          icon = '💪';
-                          break;
-                        case 'school':
-                          icon = '🎓';
-                          break;
-                        case 'social':
-                          icon = '🎉';
-                          break;
-                        case 'other':
-                          icon = '📌';
-                          break;
-                        default:
-                          icon = '📅';
-                      }
-                      return (
-                        <div key={event.id} className={theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-6 border border-gray-700' : 'bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6 border border-gray-200'}>
-                          <div className="flex items-center mb-2">
-                            <span className="text-3xl mr-3">{icon}</span>
-                            <h4 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{event.title}</h4>
-                          </div>
-                          <div className={theme === 'dark' ? 'space-y-1 text-gray-300' : 'space-y-1 text-gray-600'}>
-                            <p><span className="font-medium">{t[lang].dateLabel}:</span> {event.date}</p>
-                            <p><span className="font-medium">{t[lang].timeLabel}:</span> {event.time}</p>
-                            <p><span className="font-medium">{t[lang].locationLabel}:</span> {event.location}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {/* Right arrow */}
-                  <button
-                    onClick={handleNext}
-                    disabled={!canGoNext}
-                    className={`group p-3 ml-4 rounded-full border-2 shadow-lg bg-white dark:bg-gray-800 border-green-400 dark:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all duration-200 flex items-center justify-center ${canGoNext ? 'hover:bg-green-100 dark:hover:bg-gray-700' : 'opacity-40 cursor-not-allowed'}`}
-                    aria-label="Next events"
-                    style={{ alignSelf: 'center' }}
-                  >
-                    {/* Right chevron SVG */}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-7 h-7 text-green-600 dark:text-green-300 group-hover:text-green-800 dark:group-hover:text-green-200">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                  </button>
-                </div>
-                <div className="col-span-3 text-center mt-2">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Showing {eventStartIdx + 1}-{Math.min(eventStartIdx + 3, sortedEvents.length)} of {sortedEvents.length} events
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
+      <UpcomingEventsSection
+        theme={theme}
+        title={t[lang].eventsTitle}
+        description={t[lang].eventsDesc}
+        dateLabel={t[lang].dateLabel}
+        timeLabel={t[lang].timeLabel}
+        locationLabel={t[lang].locationLabel}
+        events={events}
+        eventsLoading={eventsLoading}
+        eventsError={eventsError}
+        visibleEvents={visibleEvents}
+        canGoPrev={canGoPrev}
+        canGoNext={canGoNext}
+        onPrev={handlePrev}
+        onNext={handleNext}
+        eventStartIdx={eventStartIdx}
+        totalEvents={sortedEvents.length}
+      />
 
       <section
         id="become-member-section"
