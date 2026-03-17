@@ -4,6 +4,7 @@ import heroBg from './images/acc1.jpg';
 const HeroSection = ({ theme, lang, t }) => {
   return (
     <section
+      id="hero-section"
       className="relative text-white overflow-hidden"
       style={{
         backgroundImage: `linear-gradient(rgba(16, 52, 30, 0.7), rgba(16, 52, 30, 0.7)), url(${heroBg})`,
