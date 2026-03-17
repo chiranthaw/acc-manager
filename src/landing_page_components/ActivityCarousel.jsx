@@ -1,6 +1,6 @@
 // src/ActivityCarousel.jsx
 import React, { useState, useEffect } from 'react';
-import { getSupabaseClient } from './lib/supabase';
+import { getSupabaseClient } from '../lib/supabase';
 
 const ActivityCarousel = ({ interval = 3000 }) => {
   const [current, setCurrent] = useState(0);

@@ -1,5 +1,5 @@
-import badtImg from './images/badt.jpg';
-import holdetImg from './images/holdet.jpg';
+import badtImg from '../../src/images/badt.jpg';
+import holdetImg from '../../src//images/holdet.jpg';
 
 const AboutSection = ({ theme, t, lang }) => {
   return (
