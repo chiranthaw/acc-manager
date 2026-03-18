@@ -9,7 +9,7 @@ import ActivityCarousel from './landing_page_components/ActivityCarousel';
 import HeaderSection from './HeaderSection';
 import HeroSection from './HeroSection';
 import AboutSection from './landing_page_components/AboutSection';
-import NewsSection from './NewsSection';
+import NewsSection from './landing_page_components/NewsSection';
 import SchoolCricketSection from './landing_page_components/SchoolCricketSection';
 import UpcomingMatchesSection from './landing_page_components/UpcomingMatchesSection';
 import UpcomingEventsSection from './landing_page_components/UpcomingEventsSection';
