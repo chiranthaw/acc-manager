@@ -1,12 +1,10 @@
 // src/SponsorsSection.jsx
-import React from 'react';
-
-import dcfLogo from './images/dcf-logo.webp';
-import skalborgLogo from './images/skalborg.png';
-import difLogoLight from './images/dif-logo-light.png';
-import difLogoDark from './images/dif-logo-dark.png';
-import sifaLogo from './images/sifa-logo.png';
-import aalCarnivalLogo from './images/aal-canival.png';
+import dcfLogo from '../images/dcf-logo.webp';
+import skalborgLogo from '../images/skalborg.png';
+import difLogoLight from '../images/dif-logo-light.png';
+import difLogoDark from '../images/dif-logo-dark.png';
+import sifaLogo from '../images/sifa-logo.png';
+import aalCarnivalLogo from '../images/aal-canival.png';
 
 const sponsors = [
   {

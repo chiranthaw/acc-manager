@@ -4,7 +4,7 @@ import schoolCricketImg1 from './images/skolecricket.jpg';
 import schoolCricketImg2 from './images/foreningsfestival.jpg';
 import translations from './lang';
 import ContactSection from './ContactSection';
-import SponsorsSection from './SponsorsSection';
+import SponsorsSection from './landing_page_components/SponsorsSection';
 import ActivityCarousel from './landing_page_components/ActivityCarousel';
 import HeaderSection from './HeaderSection';
 import HeroSection from './HeroSection';
