@@ -12,7 +12,7 @@ import AboutSection from './landing_page_components/AboutSection';
 import NewsSection from './NewsSection';
 import SchoolCricketSection from './SchoolCricketSection';
 import UpcomingMatchesSection from './landing_page_components/UpcomingMatchesSection';
-import UpcomingEventsSection from './UpcomingEventsSection';
+import UpcomingEventsSection from './landing_page_components/UpcomingEventsSection';
 import BoardSection from './BoardSection';
 import ContactModal from './ContactModal';
 import BecomeMemberSection from './BecomeMemberSection';
