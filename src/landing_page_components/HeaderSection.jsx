@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import logoImg from './images/acc-logo-new.png';
+import logoImg from '../images/acc-logo-new.png';
 
 const HeaderSection = ({ theme, lang, t, onToggleTheme, onToggleLang, onClubNameClick }) => {
   return (

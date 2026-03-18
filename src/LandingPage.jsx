@@ -6,7 +6,7 @@ import translations from './lang';
 import ContactSection from './landing_page_components/ContactSection';
 import SponsorsSection from './landing_page_components/SponsorsSection';
 import ActivityCarousel from './landing_page_components/ActivityCarousel';
-import HeaderSection from './HeaderSection';
+import HeaderSection from './landing_page_components/HeaderSection';
 import HeroSection from './landing_page_components/HeroSection';
 import AboutSection from './landing_page_components/AboutSection';
 import NewsSection from './landing_page_components/NewsSection';
