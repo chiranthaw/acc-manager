@@ -13,7 +13,7 @@ import NewsSection from './landing_page_components/NewsSection';
 import SchoolCricketSection from './landing_page_components/SchoolCricketSection';
 import UpcomingMatchesSection from './landing_page_components/UpcomingMatchesSection';
 import UpcomingEventsSection from './landing_page_components/UpcomingEventsSection';
-import BoardSection from './BoardSection';
+import BoardSection from './landing_page_components/BoardSection';
 import ContactModal from './ContactModal';
 import BecomeMemberSection from './BecomeMemberSection';
 import { getSupabaseClient } from './lib/supabase';
