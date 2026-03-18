@@ -14,7 +14,7 @@ import SchoolCricketSection from './landing_page_components/SchoolCricketSection
 import UpcomingMatchesSection from './landing_page_components/UpcomingMatchesSection';
 import UpcomingEventsSection from './landing_page_components/UpcomingEventsSection';
 import BoardSection from './landing_page_components/BoardSection';
-import ContactModal from './ContactModal';
+import ContactModal from './landing_page_components/ContactModal';
 import BecomeMemberSection from './landing_page_components/BecomeMemberSection';
 import { getSupabaseClient } from './lib/supabase';
 import logoImg from './images/acc-logo-new.png';
