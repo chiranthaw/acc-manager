@@ -7,7 +7,7 @@ import ContactSection from './ContactSection';
 import SponsorsSection from './landing_page_components/SponsorsSection';
 import ActivityCarousel from './landing_page_components/ActivityCarousel';
 import HeaderSection from './HeaderSection';
-import HeroSection from './HeroSection';
+import HeroSection from './landing_page_components/HeroSection';
 import AboutSection from './landing_page_components/AboutSection';
 import NewsSection from './landing_page_components/NewsSection';
 import SchoolCricketSection from './landing_page_components/SchoolCricketSection';

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import heroBg from './images/acc1.jpg';
+import heroBg from '../images/acc1.jpg';
 
 const HeroSection = ({ theme, lang, t }) => {
   return (
