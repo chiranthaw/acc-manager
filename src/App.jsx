@@ -7,7 +7,7 @@ import EventManager from './EventManager';
 import NewsManager from './NewsManager';
 import TeamManager from './TeamManager';
 import ActivityManager from './ActivityManager';
-import NewsDetail from './NewsDetail';
+import NewsDetail from './landing_page_components/NewsDetail';
 
 const MEMBERSHIP_OPTIONS = [
   { value: 'full', label: 'Full membership' },

@@ -1,8 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getSupabaseClient } from './lib/supabase';
-
+import { getSupabaseClient } from '../lib/supabase';
 
 function NewsDetail() {
   const { id } = useParams();
