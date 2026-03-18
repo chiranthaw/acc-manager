@@ -13,7 +13,7 @@ import NewsSection from './landing_page_components/NewsSection';
 import SchoolCricketSection from './landing_page_components/SchoolCricketSection';
 import UpcomingMatchesSection from './landing_page_components/UpcomingMatchesSection';
 import UpcomingEventsSection from './landing_page_components/UpcomingEventsSection';
-import BoardSection from './landing_page_components/BoardSection';
+import BoardSection from './BoardSection';
 import ContactModal from './landing_page_components/ContactModal';
 import BecomeMemberSection from './landing_page_components/BecomeMemberSection';
 import { getSupabaseClient } from './lib/supabase';
@@ -235,7 +235,6 @@ const LandingPage = () => {
           .eq("is_active", true)
           .order("date", { ascending: true });
         if (error) throw error;
-        console.log("Fetched events from DB:", data);
         setEvents(data || []);
       } catch (err) {
         setEventsError(err.message || "Could not load events.");
