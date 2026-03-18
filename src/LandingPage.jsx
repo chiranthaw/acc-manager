@@ -3,7 +3,7 @@ import upcomingMatchesBg from './images/acc-1.png';
 import schoolCricketImg1 from './images/skolecricket.jpg';
 import schoolCricketImg2 from './images/foreningsfestival.jpg';
 import translations from './lang';
-import ContactSection from './ContactSection';
+import ContactSection from './landing_page_components/ContactSection';
 import SponsorsSection from './landing_page_components/SponsorsSection';
 import ActivityCarousel from './landing_page_components/ActivityCarousel';
 import HeaderSection from './HeaderSection';
