@@ -15,7 +15,7 @@ import UpcomingMatchesSection from './landing_page_components/UpcomingMatchesSec
 import UpcomingEventsSection from './landing_page_components/UpcomingEventsSection';
 import BoardSection from './landing_page_components/BoardSection';
 import ContactModal from './ContactModal';
-import BecomeMemberSection from './BecomeMemberSection';
+import BecomeMemberSection from './landing_page_components/BecomeMemberSection';
 import { getSupabaseClient } from './lib/supabase';
 import logoImg from './images/acc-logo-new.png';
 

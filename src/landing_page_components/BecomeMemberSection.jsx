@@ -1,7 +1,7 @@
-import bowlingBg from './images/bowling.png';
-import newMemberImg from './images/newmember.jpg';
-import feeImg from './images/fee.jpg';
-import activeMemberImg from './images/activemember.jpg';
+import bowlingBg from '../images/bowling.png';
+import newMemberImg from '../images/newmember.jpg';
+import feeImg from '../images/fee.jpg';
+import activeMemberImg from '../images/activemember.jpg';
 
 const BecomeMemberSection = ({ theme, lang, t, onOpenContact }) => {
   return (
