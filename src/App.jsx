@@ -1134,7 +1134,7 @@ function AdminPortalApp() {
                 <div className="mt-6 border-t border-slate-800 pt-6">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-white">Admin</h2>
+                      <h2 className="text-lg font-semibold text-white">Payment Reminders</h2>
                       <p className="mt-1 text-sm text-slate-400">
                         Manage email communications for unpaid players.
                       </p>
