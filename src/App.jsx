@@ -38,6 +38,7 @@ function AdminPortalApp() {
   const [newPlayerEmail, setNewPlayerEmail] = useState('');
   const [newPlayerPhone, setNewPlayerPhone] = useState('');
   const [newPlayerAddress, setNewPlayerAddress] = useState('');
+  const [newPlayerCpr, setNewPlayerCpr] = useState('');
   const [newPlayerTeam, setNewPlayerTeam] = useState('first');
   const [newPlayerYear, setNewPlayerYear] = useState(currentYear);
   const [newPlayerMembership, setNewPlayerMembership] = useState('full');
@@ -181,7 +182,7 @@ function AdminPortalApp() {
     try {
       const { data: playersData, error: playersError } = await supabase
         .from('players')
-        .select('id, full_name, main_team, email, phone, address')
+        .select('id, full_name, main_team, email, phone, address, cpr_number')
         .order('full_name', { ascending: true });
 
       if (playersError) {
@@ -219,6 +220,7 @@ function AdminPortalApp() {
           email: player.email || '',
           phone: player.phone || '',
           address: player.address || '',
+          cprNumber: player.cpr_number || '',
           team: player.main_team || 'first',
           membershipType: status?.membership_type || 'none',
           paymentStatus: status?.payment_status || 'unpaid',
@@ -308,6 +310,8 @@ function AdminPortalApp() {
         if (newPlayerEmail.trim()) insertPayload.email = newPlayerEmail.trim();
         if (newPlayerPhone.trim()) insertPayload.phone = newPlayerPhone.trim();
         if (newPlayerAddress.trim()) insertPayload.address = newPlayerAddress.trim();
+        const cprDigitsInsert = newPlayerCpr.replace(/\D/g, '');
+        if (cprDigitsInsert.length === 10) insertPayload.cpr_number = cprDigitsInsert;
 
         const { data: playerData, error: playerError } = await supabase
           .from('players')
@@ -328,6 +332,8 @@ function AdminPortalApp() {
         else updatePayload.phone = null;
         if (newPlayerAddress.trim()) updatePayload.address = newPlayerAddress.trim();
         else updatePayload.address = null;
+        const cprDigitsUpdate = newPlayerCpr.replace(/\D/g, '');
+        updatePayload.cpr_number = cprDigitsUpdate.length === 10 ? cprDigitsUpdate : null;
 
         const { error: updatePlayerError } = await supabase
           .from('players')
@@ -353,6 +359,7 @@ function AdminPortalApp() {
       setNewPlayerEmail('');
       setNewPlayerPhone('');
       setNewPlayerAddress('');
+      setNewPlayerCpr('');
       setNewPlayerTeam('first');
       setNewPlayerMembership('full');
       setNewPlayerAmount('2000');
@@ -375,6 +382,7 @@ function AdminPortalApp() {
     setNewPlayerEmail('');
     setNewPlayerPhone('');
     setNewPlayerAddress('');
+    setNewPlayerCpr('');
     setNewPlayerTeam('first');
     setNewPlayerYear(selectedYear);
     setNewPlayerMembership('full');
@@ -390,6 +398,8 @@ function AdminPortalApp() {
     setNewPlayerEmail(player.email || '');
     setNewPlayerPhone(player.phone || '');
     setNewPlayerAddress(player.address || '');
+    const cprd = player.cprNumber || '';
+    setNewPlayerCpr(cprd.length === 10 ? `${cprd.slice(0, 6)}-${cprd.slice(6)}` : cprd);
     setNewPlayerTeam(player.team || 'first');
     setNewPlayerYear(selectedYear);
     setNewPlayerMembership(player.membershipType);
@@ -1396,6 +1406,23 @@ function AdminPortalApp() {
                         </option>
                       ))}
                     </select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerCpr">
+                      CPR-No
+                    </label>
+                    <input
+                      id="playerCpr"
+                      type="text"
+                      value={newPlayerCpr}
+                      onChange={(event) => {
+                        const digits = event.target.value.replace(/\D/g, '').slice(0, 10);
+                        setNewPlayerCpr(digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits);
+                      }}
+                      placeholder="XXXXXX-XXXX"
+                      maxLength={11}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    />
                   </div>
                   <div className="sm:col-span-2">
                     <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerAddress">

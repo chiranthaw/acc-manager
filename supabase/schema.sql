@@ -365,6 +365,9 @@ add column if not exists email text;
 alter table public.players
 add column if not exists main_team text not null default 'first' check (main_team in ('first', 'second'));
 
+alter table public.players
+add column if not exists cpr_number char(10);
+
 create table if not exists public.player_year_status (
   player_id uuid not null references public.players(id) on delete cascade,
   year int not null,
