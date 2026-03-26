@@ -50,6 +50,7 @@ function AdminPortalApp() {
   const [newPlayerParentName, setNewPlayerParentName] = useState('');
   const [newPlayerParentEmail, setNewPlayerParentEmail] = useState('');
   const [newPlayerParentPhone, setNewPlayerParentPhone] = useState('');
+  const [newPlayerPhoto, setNewPlayerPhoto] = useState(null);
   const [newPlayerTeam, setNewPlayerTeam] = useState('first');
   const [newPlayerYear, setNewPlayerYear] = useState(currentYear);
   const [newPlayerMembership, setNewPlayerMembership] = useState('full');
@@ -188,7 +189,7 @@ function AdminPortalApp() {
     try {
       const { data: playersData, error: playersError } = await supabase
         .from('players')
-        .select('id, full_name, main_team, email, phone, address, cpr_number, category, parent_name, parent_email, parent_phone')
+        .select('id, full_name, main_team, email, phone, address, cpr_number, category, parent_name, parent_email, parent_phone, photo_url')
         .order('full_name', { ascending: true });
 
       if (playersError) {
@@ -231,6 +232,7 @@ function AdminPortalApp() {
           parentName: player.parent_name || '',
           parentEmail: player.parent_email || '',
           parentPhone: player.parent_phone || '',
+          photoUrl: player.photo_url || '',
           team: player.main_team || 'first',
           membershipType: status?.membership_type || 'none',
           paymentStatus: status?.payment_status || 'unpaid',
@@ -370,6 +372,20 @@ function AdminPortalApp() {
         paid,
       );
 
+      // Upload photo if selected
+      if (newPlayerPhoto) {
+        const ext = newPlayerPhoto.name.split('.').pop();
+        const filePath = `${playerId}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('player-photos')
+          .upload(filePath, newPlayerPhoto, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage
+          .from('player-photos')
+          .getPublicUrl(filePath);
+        await supabase.from('players').update({ photo_url: urlData.publicUrl }).eq('id', playerId);
+      }
+
       await loadPlayersForYear(selectedYear);
 
       setNewPlayerName('');
@@ -381,6 +397,7 @@ function AdminPortalApp() {
       setNewPlayerParentName('');
       setNewPlayerParentEmail('');
       setNewPlayerParentPhone('');
+      setNewPlayerPhoto(null);
       setNewPlayerTeam('first');
       setNewPlayerMembership('full');
       setNewPlayerAmount('2000');
@@ -408,6 +425,7 @@ function AdminPortalApp() {
     setNewPlayerParentName('');
     setNewPlayerParentEmail('');
     setNewPlayerParentPhone('');
+    setNewPlayerPhoto(null);
     setNewPlayerTeam('first');
     setNewPlayerYear(selectedYear);
     setNewPlayerMembership('full');
@@ -429,6 +447,7 @@ function AdminPortalApp() {
     setNewPlayerParentName(player.parentName || '');
     setNewPlayerParentEmail(player.parentEmail || '');
     setNewPlayerParentPhone(player.parentPhone || '');
+    setNewPlayerPhoto(null);
     setNewPlayerTeam(player.team || 'first');
     setNewPlayerYear(selectedYear);
     setNewPlayerMembership(player.membershipType);
@@ -962,6 +981,8 @@ function AdminPortalApp() {
             <table className="min-w-full divide-y divide-slate-800">
               <thead className="bg-slate-900/80">
                 <tr>
+                  <th className="w-12 px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
                     Player
                   </th>
@@ -989,7 +1010,7 @@ function AdminPortalApp() {
                 {dashboardLoading ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-4 py-5 text-sm text-slate-400"
                     >
                       Loading players...
@@ -998,7 +1019,7 @@ function AdminPortalApp() {
                 ) : filteredPlayers.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-4 py-5 text-sm text-slate-400"
                     >
                       No players found for this search.
@@ -1007,6 +1028,23 @@ function AdminPortalApp() {
                 ) : (
                   filteredPlayers.map((player) => (
                     <tr key={player.id}>
+                      <td className="px-4 py-3">
+                        {player.photoUrl ? (
+                          <img
+                            src={player.photoUrl}
+                            alt={player.fullName}
+                            width={48}
+                            height={48}
+                            className="h-12 w-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="h-6 w-6 text-slate-300">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                            </svg>
+                          </div>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-slate-100">
                         {player.fullName}
                       </td>
@@ -1245,6 +1283,18 @@ function AdminPortalApp() {
               </p>
 
               <form onSubmit={handleSavePlayer} className="mt-5 space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerPhoto">
+                    Player Photo
+                  </label>
+                  <input
+                    id="playerPhoto"
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => setNewPlayerPhoto(event.target.files[0] || null)}
+                    className="w-full text-sm text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-500 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-indigo-400"
+                  />
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerName">

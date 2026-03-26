@@ -380,6 +380,9 @@ add column if not exists parent_email text;
 alter table public.players
 add column if not exists parent_phone text;
 
+alter table public.players
+add column if not exists photo_url text;
+
 create table if not exists public.player_year_status (
   player_id uuid not null references public.players(id) on delete cascade,
   year int not null,
