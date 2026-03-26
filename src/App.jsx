@@ -21,6 +21,11 @@ const TEAM_OPTIONS = [
   { value: 'second', label: '2nd team' },
 ];
 
+const CATEGORY_OPTIONS = [
+  { value: 'senior', label: 'Senior' },
+  { value: 'junior', label: 'Junior' },
+];
+
 function AdminPortalApp() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -32,6 +37,7 @@ function AdminPortalApp() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [playerSearch, setPlayerSearch] = useState('');
+  const [playerCategoryFilter, setPlayerCategoryFilter] = useState('all');
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const [playerModalMode, setPlayerModalMode] = useState('add');
   const [editingPlayerId, setEditingPlayerId] = useState(null);
@@ -40,6 +46,10 @@ function AdminPortalApp() {
   const [newPlayerPhone, setNewPlayerPhone] = useState('');
   const [newPlayerAddress, setNewPlayerAddress] = useState('');
   const [newPlayerCpr, setNewPlayerCpr] = useState('');
+  const [newPlayerCategory, setNewPlayerCategory] = useState('senior');
+  const [newPlayerParentName, setNewPlayerParentName] = useState('');
+  const [newPlayerParentEmail, setNewPlayerParentEmail] = useState('');
+  const [newPlayerParentPhone, setNewPlayerParentPhone] = useState('');
   const [newPlayerTeam, setNewPlayerTeam] = useState('first');
   const [newPlayerYear, setNewPlayerYear] = useState(currentYear);
   const [newPlayerMembership, setNewPlayerMembership] = useState('full');
@@ -178,7 +188,7 @@ function AdminPortalApp() {
     try {
       const { data: playersData, error: playersError } = await supabase
         .from('players')
-        .select('id, full_name, main_team, email, phone, address, cpr_number')
+        .select('id, full_name, main_team, email, phone, address, cpr_number, category, parent_name, parent_email, parent_phone')
         .order('full_name', { ascending: true });
 
       if (playersError) {
@@ -217,6 +227,10 @@ function AdminPortalApp() {
           phone: player.phone || '',
           address: player.address || '',
           cprNumber: player.cpr_number || '',
+          category: player.category || 'senior',
+          parentName: player.parent_name || '',
+          parentEmail: player.parent_email || '',
+          parentPhone: player.parent_phone || '',
           team: player.main_team || 'first',
           membershipType: status?.membership_type || 'none',
           paymentStatus: status?.payment_status || 'unpaid',
@@ -301,6 +315,7 @@ function AdminPortalApp() {
         const insertPayload = {
           full_name: name,
           main_team: newPlayerTeam,
+          category: newPlayerCategory,
           created_by: session.user.id,
         };
         if (newPlayerEmail.trim()) insertPayload.email = newPlayerEmail.trim();
@@ -308,6 +323,9 @@ function AdminPortalApp() {
         if (newPlayerAddress.trim()) insertPayload.address = newPlayerAddress.trim();
         const cprDigitsInsert = newPlayerCpr.replace(/\D/g, '');
         if (cprDigitsInsert.length === 10) insertPayload.cpr_number = cprDigitsInsert;
+        if (newPlayerParentName.trim()) insertPayload.parent_name = newPlayerParentName.trim();
+        if (newPlayerParentEmail.trim()) insertPayload.parent_email = newPlayerParentEmail.trim();
+        if (newPlayerParentPhone.trim()) insertPayload.parent_phone = newPlayerParentPhone.trim();
 
         const { data: playerData, error: playerError } = await supabase
           .from('players')
@@ -321,7 +339,7 @@ function AdminPortalApp() {
 
         playerId = playerData.id;
       } else {
-        const updatePayload = { full_name: name, main_team: newPlayerTeam };
+        const updatePayload = { full_name: name, main_team: newPlayerTeam, category: newPlayerCategory };
         if (newPlayerEmail.trim()) updatePayload.email = newPlayerEmail.trim();
         else updatePayload.email = null;
         if (newPlayerPhone.trim()) updatePayload.phone = newPlayerPhone.trim();
@@ -330,6 +348,9 @@ function AdminPortalApp() {
         else updatePayload.address = null;
         const cprDigitsUpdate = newPlayerCpr.replace(/\D/g, '');
         updatePayload.cpr_number = cprDigitsUpdate.length === 10 ? cprDigitsUpdate : null;
+        updatePayload.parent_name = newPlayerParentName.trim() || null;
+        updatePayload.parent_email = newPlayerParentEmail.trim() || null;
+        updatePayload.parent_phone = newPlayerParentPhone.trim() || null;
 
         const { error: updatePlayerError } = await supabase
           .from('players')
@@ -356,6 +377,10 @@ function AdminPortalApp() {
       setNewPlayerPhone('');
       setNewPlayerAddress('');
       setNewPlayerCpr('');
+      setNewPlayerCategory('senior');
+      setNewPlayerParentName('');
+      setNewPlayerParentEmail('');
+      setNewPlayerParentPhone('');
       setNewPlayerTeam('first');
       setNewPlayerMembership('full');
       setNewPlayerAmount('2000');
@@ -379,6 +404,10 @@ function AdminPortalApp() {
     setNewPlayerPhone('');
     setNewPlayerAddress('');
     setNewPlayerCpr('');
+    setNewPlayerCategory('senior');
+    setNewPlayerParentName('');
+    setNewPlayerParentEmail('');
+    setNewPlayerParentPhone('');
     setNewPlayerTeam('first');
     setNewPlayerYear(selectedYear);
     setNewPlayerMembership('full');
@@ -396,6 +425,10 @@ function AdminPortalApp() {
     setNewPlayerAddress(player.address || '');
     const cprd = player.cprNumber || '';
     setNewPlayerCpr(cprd.length === 10 ? `${cprd.slice(0, 6)}-${cprd.slice(6)}` : cprd);
+    setNewPlayerCategory(player.category || 'senior');
+    setNewPlayerParentName(player.parentName || '');
+    setNewPlayerParentEmail(player.parentEmail || '');
+    setNewPlayerParentPhone(player.parentPhone || '');
     setNewPlayerTeam(player.team || 'first');
     setNewPlayerYear(selectedYear);
     setNewPlayerMembership(player.membershipType);
@@ -777,6 +810,10 @@ function AdminPortalApp() {
     ];
 
     const filteredPlayers = players.filter((player) => {
+      if (playerCategoryFilter !== 'all' && player.category !== playerCategoryFilter) {
+        return false;
+      }
+
       const query = playerSearch.trim().toLowerCase();
 
       if (!query) {
@@ -852,7 +889,7 @@ function AdminPortalApp() {
                   <div>
                     <h1 className="text-xl font-semibold text-white">Players</h1>
                     <p className="mt-1 text-sm text-slate-400">
-                      Register players and manage membership and payment status for{' '}
+                      Register players and manage membership for{' '}
                       {selectedYear}.
                     </p>
                   </div>
@@ -884,6 +921,15 @@ function AdminPortalApp() {
                   placeholder="Search players..."
                   className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400 sm:w-64"
                 />
+                <select
+                  value={playerCategoryFilter}
+                  onChange={(event) => setPlayerCategoryFilter(event.target.value)}
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                >
+                  <option value="all">All Players</option>
+                  <option value="senior">Senior</option>
+                  <option value="junior">Junior</option>
+                </select>
                 <button
                   type="button"
                   onClick={openAddPlayerModal}
@@ -1255,6 +1301,23 @@ function AdminPortalApp() {
                     </select>
                   </div>
                   <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerCategory">
+                      Category
+                    </label>
+                    <select
+                      id="playerCategory"
+                      value={newPlayerCategory}
+                      onChange={(event) => setNewPlayerCategory(event.target.value)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                    >
+                      {CATEGORY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
                     <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="playerCpr">
                       CPR-No
                     </label>
@@ -1284,6 +1347,47 @@ function AdminPortalApp() {
                     />
                   </div>
                 </div>
+
+                {newPlayerCategory === 'junior' && (
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="parentName">
+                        Parent / Guardian Name
+                      </label>
+                      <input
+                        id="parentName"
+                        type="text"
+                        value={newPlayerParentName}
+                        onChange={(event) => setNewPlayerParentName(event.target.value)}
+                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="parentEmail">
+                        Parent Email
+                      </label>
+                      <input
+                        id="parentEmail"
+                        type="email"
+                        value={newPlayerParentEmail}
+                        onChange={(event) => setNewPlayerParentEmail(event.target.value)}
+                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="parentPhone">
+                        Parent Phone
+                      </label>
+                      <input
+                        id="parentPhone"
+                        type="text"
+                        value={newPlayerParentPhone}
+                        onChange={(event) => setNewPlayerParentPhone(event.target.value)}
+                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div>

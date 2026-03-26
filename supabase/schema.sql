@@ -368,6 +368,18 @@ add column if not exists main_team text not null default 'first' check (main_tea
 alter table public.players
 add column if not exists cpr_number char(10);
 
+alter table public.players
+add column if not exists category text not null default 'senior' check (category in ('senior', 'junior'));
+
+alter table public.players
+add column if not exists parent_name text;
+
+alter table public.players
+add column if not exists parent_email text;
+
+alter table public.players
+add column if not exists parent_phone text;
+
 create table if not exists public.player_year_status (
   player_id uuid not null references public.players(id) on delete cascade,
   year int not null,
