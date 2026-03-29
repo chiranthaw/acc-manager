@@ -22,13 +22,22 @@ const BoardSection = ({ theme, lang, t }) => {
       image: new URL('./images/board/qn.png', import.meta.url).href,
     },
     {
+      name: 'Chirantha Wanasinghe',
+      role: lang === 'da' ? 'Bestyrelsesmedlem' : 'Board Member',
+      email: 'chirantha@aalborg-cricket.dk',
+      phone: '+45 24 49 00 56',
+      image: new URL('./images/board/chirantha.jfif', import.meta.url).href,
+    },
+    {
       name: 'Manish Bisht',
       role: lang === 'da' ? 'Bestyrelsesmedlem' : 'Board Member',
+      email: 'manish@aalborg-cricket.dk',
       image: new URL('./images/board/Manish.jpeg', import.meta.url).href,
     },
     {
       name: 'Ravi Ndra',
       role: lang === 'da' ? 'Revisor' : 'Auditor',
+      email: 'ravi@aalborg-cricket.dk',
       image: new URL('./images/board/ravi.png', import.meta.url).href,
     },
   ];
