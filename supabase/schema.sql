@@ -110,7 +110,8 @@ returns table (
   email text,
   is_approved boolean,
   approved_at timestamptz,
-  created_at timestamptz
+  created_at timestamptz,
+  role text
 )
 language sql
 stable
@@ -122,7 +123,8 @@ as $$
     u.email,
     au.is_approved,
     au.approved_at,
-    au.created_at
+    au.created_at,
+    au.role
   from public.admin_users au
   join auth.users u on u.id = au.user_id
   where public.is_admin_approved()
@@ -172,6 +174,48 @@ end;
 $$;
 
 grant execute on function public.set_admin_approval(text, boolean) to authenticated;
+
+-- Function to set user role (admin only)
+create or replace function public.set_user_role(
+  target_email text,
+  new_role text default 'player'
+)
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  target_user_id uuid;
+begin
+  if not public.is_admin_approved() then
+    raise exception 'You are not allowed to manage user roles.';
+  end if;
+
+  if new_role not in ('admin', 'player') then
+    raise exception 'Invalid role. Must be admin or player.';
+  end if;
+
+  select id into target_user_id
+  from auth.users
+  where lower(email) = lower(trim(target_email))
+  limit 1;
+
+  if target_user_id is null then
+    raise exception 'No account exists for email: %', target_email;
+  end if;
+
+  update public.admin_users
+  set role = new_role
+  where user_id = target_user_id;
+end;
+$$;
+
+grant execute on function public.set_user_role(text, text) to authenticated;
+
+-- Add role column to admin_users (admin or player)
+alter table public.admin_users
+add column if not exists role text not null default 'player' check (role in ('admin', 'player'));
 
 -- News table for club news items
 create table if not exists public.news (

@@ -31,6 +31,7 @@ function AdminPortalApp() {
   const [authLoading, setAuthLoading] = useState(true);
   const [adminAccessLoading, setAdminAccessLoading] = useState(false);
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
+  const [userRole, setUserRole] = useState('player'); // 'admin' | 'player'
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState('');
   const [players, setPlayers] = useState([]);
@@ -148,7 +149,7 @@ function AdminPortalApp() {
       try {
         const { data, error } = await supabase
           .from('admin_users')
-          .select('is_approved')
+          .select('is_approved, role')
           .eq('user_id', session.user.id)
           .maybeSingle();
 
@@ -157,8 +158,10 @@ function AdminPortalApp() {
         }
 
         setHasAdminAccess(Boolean(data?.is_approved));
+        setUserRole(data?.role || 'player');
       } catch {
         setHasAdminAccess(false);
+        setUserRole('player');
       } finally {
         setAdminAccessLoading(false);
       }
@@ -871,8 +874,15 @@ function AdminPortalApp() {
                     currentView === 'admin' ? 'text-white' : 'hover:text-white'
                   }`}
                 >
-                  Admin
+                  Dashboard
                 </button>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  userRole === 'admin'
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                }`}>
+                  {userRole === 'admin' ? 'Admin' : 'Player'}
+                </span>
               </nav>
             </div>
             <div className="flex items-center gap-3">
@@ -901,7 +911,7 @@ function AdminPortalApp() {
         </header>
 
         <section className="mx-auto min-h-[calc(100vh-4rem)] w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-          {currentView === 'players' ? (
+          {currentView === 'players' && userRole === 'admin' ? (
             <>
               <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1137,40 +1147,44 @@ function AdminPortalApp() {
           ) : currentView === 'admin' ? (
             <>
               <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-                <div>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                {userRole === 'admin' && (
+                  <>
                     <div>
-                      <h2 className="text-lg font-semibold text-white mb-2">Manage Players</h2>
-                      <p className="mb-3 text-sm text-slate-400">Open the player management view.</p>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h2 className="text-lg font-semibold text-white mb-2">Manage Players</h2>
+                          <p className="mb-3 text-sm text-slate-400">Open the player management view.</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentView('players')}
+                          className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                        >
+                          Manage Players
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentView('players')}
-                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
-                    >
-                      Manage Players
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-6 border-t border-slate-800 pt-6">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-white">Payment Reminders</h2>
-                      <p className="mt-1 text-sm text-slate-400">
-                        Manage email communications for unpaid players.
-                      </p>
+                    <div className="mt-6 border-t border-slate-800 pt-6">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h2 className="text-lg font-semibold text-white">Payment Reminders</h2>
+                          <p className="mt-1 text-sm text-slate-400">
+                            Manage email communications for unpaid players.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={openEmailModal}
+                          className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
+                        >
+                          Send Payment Reminder
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={openEmailModal}
-                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400"
-                    >
-                      Send Payment Reminder
-                    </button>
-                  </div>
-                </div>
-                {/* New Manage Events section */}
-                <div className="mt-6 border-t border-slate-800 pt-6">
+                  </>
+                )}
+                {/* Manage Events section */}
+                <div className={userRole === 'admin' ? "mt-6 border-t border-slate-800 pt-6" : ""}>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-white mb-2">Manage Events</h2>
@@ -1185,7 +1199,7 @@ function AdminPortalApp() {
                     </button>
                   </div>
                 </div>
-                {/* New Manage News section */}
+                {/* Manage News section */}
                 <div className="mt-6 border-t border-slate-800 pt-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -1201,7 +1215,7 @@ function AdminPortalApp() {
                     </button>
                   </div>
                 </div>
-                {/* New Manage Teams section */}
+                {/* Manage Teams section */}
                 <div className="mt-6 border-t border-slate-800 pt-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -1217,7 +1231,7 @@ function AdminPortalApp() {
                     </button>
                   </div>
                 </div>
-                {/* New Manage Activities section */}
+                {/* Manage Activities section */}
                 <div className="mt-6 border-t border-slate-800 pt-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -1233,22 +1247,24 @@ function AdminPortalApp() {
                     </button>
                   </div>
                 </div>
-                {/* Admin Access section */}
-                <div className="mt-6 border-t border-slate-800 pt-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-white mb-2">Admin Access</h2>
-                      <p className="mb-3 text-sm text-slate-400">Approve or revoke admin portal access by account email.</p>
+                {/* Admin Access section - admin only */}
+                {userRole === 'admin' && (
+                  <div className="mt-6 border-t border-slate-800 pt-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h2 className="text-lg font-semibold text-white mb-2">Admin Access</h2>
+                        <p className="mb-3 text-sm text-slate-400">Approve or revoke admin portal access and manage user roles.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentView('adminAccess')}
+                        className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                      >
+                        Manage Admin Access
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentView('adminAccess')}
-                      className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
-                    >
-                      Manage Admin Access
-                    </button>
                   </div>
-                </div>
+                )}
               </div>
             </>
           ) : currentView === 'events' ? (
@@ -1259,7 +1275,7 @@ function AdminPortalApp() {
             <TeamManager onBack={() => setCurrentView('admin')} />
           ) : currentView === 'activities' ? (
             <ActivityManager onBack={() => setCurrentView('admin')} />
-          ) : currentView === 'adminAccess' ? (
+          ) : currentView === 'adminAccess' && userRole === 'admin' ? (
             <AdminAccessManager session={session} hasAdminAccess={hasAdminAccess} onBack={() => setCurrentView('admin')} />
           ) : (
             <>
