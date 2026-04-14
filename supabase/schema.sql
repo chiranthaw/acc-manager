@@ -108,6 +108,7 @@ create or replace function public.get_admin_users()
 returns table (
   user_id uuid,
   email text,
+  full_name text,
   is_approved boolean,
   approved_at timestamptz,
   created_at timestamptz,
@@ -121,6 +122,7 @@ as $$
   select
     au.user_id,
     u.email,
+    u.raw_user_meta_data->>'full_name' as full_name,
     au.is_approved,
     au.approved_at,
     au.created_at,

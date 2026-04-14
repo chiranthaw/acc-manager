@@ -157,6 +157,9 @@ const AdminAccessManager = ({ session, hasAdminAccess, onBack }) => {
           <thead className="bg-slate-900/80">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+                Name
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
                 Email
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
@@ -173,13 +176,13 @@ const AdminAccessManager = ({ session, hasAdminAccess, onBack }) => {
           <tbody className="divide-y divide-slate-800 bg-slate-900">
             {adminUsersLoading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-4 text-sm text-slate-400">
+                <td colSpan={5} className="px-4 py-4 text-sm text-slate-400">
                   Loading users...
                 </td>
               </tr>
             ) : adminUsers.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-4 text-sm text-slate-400">
+                <td colSpan={5} className="px-4 py-4 text-sm text-slate-400">
                   No accounts found.
                 </td>
               </tr>
@@ -191,6 +194,7 @@ const AdminAccessManager = ({ session, hasAdminAccess, onBack }) => {
                 const isSelf = rowEmail === (session.user.email || '').toLowerCase();
                 return (
                   <tr key={adminUser.user_id}>
+                    <td className="px-4 py-3 text-sm text-slate-100">{adminUser.full_name || '—'}</td>
                     <td className="px-4 py-3 text-sm text-slate-100">{adminUser.email}</td>
                     <td className="px-4 py-3 text-sm text-slate-300">
                       {adminUser.is_approved ? (
