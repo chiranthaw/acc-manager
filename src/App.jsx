@@ -70,6 +70,13 @@ function AdminPortalApp() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
+  // password recovery states
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+  const [resetPasswordError, setResetPasswordError] = useState('');
+  const [resetPasswordMessage, setResetPasswordMessage] = useState('');
   // profile editing states
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileFullName, setProfileFullName] = useState('');
@@ -111,9 +118,12 @@ function AdminPortalApp() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession ?? null);
       setAuthLoading(false);
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
+      }
     });
 
     return () => {
@@ -649,6 +659,7 @@ function AdminPortalApp() {
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         email,
+        { redirectTo: `${window.location.origin}/admin` },
       );
       if (resetError) throw resetError;
       setForgotMessage('Password recovery email sent. Check your inbox.');
@@ -656,6 +667,45 @@ function AdminPortalApp() {
       setForgotError(err.message || 'Failed to send recovery email.');
     } finally {
       setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (event) => {
+    event.preventDefault();
+    setResetPasswordError('');
+    setResetPasswordMessage('');
+
+    if (!newPassword || newPassword.length < 6) {
+      setResetPasswordError('Password must be at least 6 characters.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setResetPasswordError('Passwords do not match.');
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setResetPasswordError('Supabase client could not be initialized.');
+      return;
+    }
+
+    setResetPasswordLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setResetPasswordMessage('Password updated successfully.');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => {
+        setIsPasswordRecovery(false);
+        setResetPasswordMessage('');
+      }, 2000);
+    } catch (err) {
+      setResetPasswordError(err.message || 'Failed to update password.');
+    } finally {
+      setResetPasswordLoading(false);
     }
   };
 
@@ -795,6 +845,73 @@ function AdminPortalApp() {
       <main className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100 antialiased sm:px-6 lg:px-8">
         <div className="mx-auto flex min-h-[80vh] w-full max-w-5xl items-center justify-center">
           <p className="text-sm text-slate-300">Loading...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (session && isPasswordRecovery) {
+    return (
+      <main className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100 antialiased sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-[80vh] w-full max-w-md items-center justify-center">
+          <div className="w-full rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl">
+            <h1 className="text-2xl font-semibold text-white">Set new password</h1>
+            <p className="mt-2 text-sm text-slate-400">
+              Enter your new password below.
+            </p>
+
+            <form className="mt-6 space-y-4" onSubmit={handleResetPassword}>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="newPassword">
+                  New password
+                </label>
+                <input
+                  id="newPassword"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none ring-indigo-400 transition placeholder:text-slate-500 focus:border-indigo-400 focus:ring-2"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-200" htmlFor="confirmPassword">
+                  Confirm password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-slate-100 outline-none ring-indigo-400 transition placeholder:text-slate-500 focus:border-indigo-400 focus:ring-2"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {resetPasswordError && (
+                <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+                  {resetPasswordError}
+                </p>
+              )}
+              {resetPasswordMessage && (
+                <p className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+                  {resetPasswordMessage}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={resetPasswordLoading}
+                className="w-full rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {resetPasswordLoading ? 'Updating...' : 'Update password'}
+              </button>
+            </form>
+          </div>
         </div>
       </main>
     );
