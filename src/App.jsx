@@ -10,6 +10,7 @@ import ActivityManager from './ActivityManager';
 import AdminAccessManager from './AdminAccessManager';
 import AttendanceManager from './AttendanceManager';
 import ReportsManager from './ReportsManager';
+import VolunteeringManager from './VolunteeringManager';
 import NewsDetail from './landing_page_components/NewsDetail';
 
 const MEMBERSHIP_OPTIONS = [
@@ -1310,6 +1311,21 @@ function AdminPortalApp() {
                       </div>
                     </div>
                     <div className="mt-6 border-t border-slate-800 pt-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h2 className="text-lg font-semibold text-white mb-2">Volunteering</h2>
+                          <p className="mb-3 text-sm text-slate-400">Track player participation in volunteer sessions.</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentView('volunteering')}
+                          className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                        >
+                          Manage Volunteering
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-6 border-t border-slate-800 pt-6">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <h2 className="text-lg font-semibold text-white">Payment Reminders</h2>
@@ -1440,6 +1456,8 @@ function AdminPortalApp() {
             <ActivityManager onBack={() => setCurrentView('admin')} />
           ) : currentView === 'attendance' && userRole === 'admin' ? (
             <AttendanceManager onBack={() => setCurrentView('admin')} />
+          ) : currentView === 'volunteering' && userRole === 'admin' ? (
+            <VolunteeringManager onBack={() => setCurrentView('admin')} />
           ) : currentView === 'reports' && userRole === 'admin' ? (
             <ReportsManager onBack={() => setCurrentView('admin')} />
           ) : currentView === 'adminAccess' && userRole === 'admin' ? (
