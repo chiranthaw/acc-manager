@@ -520,3 +520,82 @@ on public.player_year_status
 for delete
 to authenticated
 using (public.is_admin_approved());
+
+-- Practice sessions table
+create table if not exists public.practice_sessions (
+  id uuid primary key default gen_random_uuid(),
+  session_date date not null,
+  notes text,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.practice_sessions enable row level security;
+
+drop policy if exists "practice_sessions_select_authenticated" on public.practice_sessions;
+create policy "practice_sessions_select_authenticated"
+on public.practice_sessions
+for select
+to authenticated
+using (public.is_admin_approved());
+
+drop policy if exists "practice_sessions_insert_authenticated" on public.practice_sessions;
+create policy "practice_sessions_insert_authenticated"
+on public.practice_sessions
+for insert
+to authenticated
+with check (public.is_admin_approved());
+
+drop policy if exists "practice_sessions_update_authenticated" on public.practice_sessions;
+create policy "practice_sessions_update_authenticated"
+on public.practice_sessions
+for update
+to authenticated
+using (public.is_admin_approved())
+with check (public.is_admin_approved());
+
+drop policy if exists "practice_sessions_delete_authenticated" on public.practice_sessions;
+create policy "practice_sessions_delete_authenticated"
+on public.practice_sessions
+for delete
+to authenticated
+using (public.is_admin_approved());
+
+-- Practice attendance records
+create table if not exists public.practice_attendance (
+  session_id uuid not null references public.practice_sessions(id) on delete cascade,
+  player_id uuid not null references public.players(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (session_id, player_id)
+);
+
+alter table public.practice_attendance enable row level security;
+
+drop policy if exists "practice_attendance_select_authenticated" on public.practice_attendance;
+create policy "practice_attendance_select_authenticated"
+on public.practice_attendance
+for select
+to authenticated
+using (public.is_admin_approved());
+
+drop policy if exists "practice_attendance_insert_authenticated" on public.practice_attendance;
+create policy "practice_attendance_insert_authenticated"
+on public.practice_attendance
+for insert
+to authenticated
+with check (public.is_admin_approved());
+
+drop policy if exists "practice_attendance_update_authenticated" on public.practice_attendance;
+create policy "practice_attendance_update_authenticated"
+on public.practice_attendance
+for update
+to authenticated
+using (public.is_admin_approved())
+with check (public.is_admin_approved());
+
+drop policy if exists "practice_attendance_delete_authenticated" on public.practice_attendance;
+create policy "practice_attendance_delete_authenticated"
+on public.practice_attendance
+for delete
+to authenticated
+using (public.is_admin_approved());
