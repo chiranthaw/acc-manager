@@ -5,23 +5,251 @@ import { getSupabaseClient } from './lib/supabase';
 
 const MEMBERSHIP_LABELS = { full: 'Full', inactive: 'Inactive', none: 'None' };
 
+function getRateColor(rate) {
+  if (rate >= 75) return 'text-emerald-400';
+  if (rate >= 40) return 'text-amber-400';
+  return 'text-rose-400';
+}
+
+function getRateBarColor(rate) {
+  if (rate >= 75) return 'bg-emerald-500';
+  if (rate >= 40) return 'bg-amber-500';
+  return 'bg-rose-500';
+}
+
+function getPayBarColor(progress) {
+  if (progress >= 100) return 'bg-emerald-500';
+  if (progress >= 50) return 'bg-amber-500';
+  return 'bg-rose-500';
+}
+
+function AttendanceReportSection({ sessionTable, attendanceTable, label }) {
+  const [players, setPlayers] = useState([]);
+  const [error, setError] = useState('');
+  const currentYear = new Date().getFullYear();
+  const [from, setFrom] = useState(new Date(currentYear, 0, 1));
+  const [to, setTo] = useState(new Date());
+  const [data, setData] = useState([]);
+  const [totalSessions, setTotalSessions] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('rate_desc');
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    supabase
+      .from('players')
+      .select('id, full_name, main_team, category')
+      .order('full_name', { ascending: true })
+      .then(({ data }) => setPlayers(data || []));
+  }, []);
+
+  async function generate() {
+    setLoading(true);
+    setError('');
+    const supabase = getSupabaseClient();
+    const fromStr = from.toLocaleDateString('en-CA');
+    const toStr = to.toLocaleDateString('en-CA');
+
+    const { data: rangeSessions, error: sessErr } = await supabase
+      .from(sessionTable)
+      .select('id, session_date')
+      .gte('session_date', fromStr)
+      .lte('session_date', toStr)
+      .order('session_date', { ascending: true });
+
+    if (sessErr) { setError(sessErr.message); setLoading(false); return; }
+
+    const sessionIds = (rangeSessions || []).map((s) => s.id);
+    setTotalSessions(sessionIds.length);
+
+    if (sessionIds.length === 0) {
+      setData(players.map((p) => ({
+        id: p.id, fullName: p.full_name, team: p.main_team, category: p.category,
+        attended: 0, total: 0, rate: 0,
+      })));
+      setLoading(false);
+      return;
+    }
+
+    const { data: rows, error: attErr } = await supabase
+      .from(attendanceTable)
+      .select('player_id, session_id')
+      .in('session_id', sessionIds);
+
+    if (attErr) { setError(attErr.message); setLoading(false); return; }
+
+    const countMap = new Map();
+    for (const row of (rows || [])) {
+      countMap.set(row.player_id, (countMap.get(row.player_id) || 0) + 1);
+    }
+
+    setData(players.map((p) => {
+      const attended = countMap.get(p.id) || 0;
+      return {
+        id: p.id, fullName: p.full_name, team: p.main_team, category: p.category,
+        attended, total: sessionIds.length,
+        rate: sessionIds.length > 0 ? Math.round((attended / sessionIds.length) * 100) : 0,
+      };
+    }));
+    setLoading(false);
+  }
+
+  const filtered = data
+    .filter((r) => {
+      if (categoryFilter !== 'all' && r.category !== categoryFilter) return false;
+      const q = search.trim().toLowerCase();
+      if (q && !r.fullName.toLowerCase().includes(q)) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'rate_asc': return a.rate - b.rate;
+        case 'name_asc': return a.fullName.localeCompare(b.fullName);
+        case 'name_desc': return b.fullName.localeCompare(a.fullName);
+        case 'attended_desc': return b.attended - a.attended;
+        default: return b.rate - a.rate;
+      }
+    });
+
+  return (
+    <>
+      {error && <div className="mb-4 rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{error}</div>}
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:flex-wrap">
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">From</label>
+            <DatePicker
+              selected={from}
+              onChange={(date) => setFrom(date)}
+              dateFormat="yyyy-MM-dd"
+              className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+              calendarClassName="dark-datepicker"
+              selectsStart startDate={from} endDate={to}
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">To</label>
+            <DatePicker
+              selected={to}
+              onChange={(date) => setTo(date)}
+              dateFormat="yyyy-MM-dd"
+              className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+              calendarClassName="dark-datepicker"
+              selectsEnd startDate={from} endDate={to} minDate={from}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={generate}
+            disabled={loading}
+            className="rounded-lg bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:opacity-60"
+          >
+            {loading ? 'Loading...' : 'Generate Report'}
+          </button>
+        </div>
+      </div>
+
+      {data.length > 0 && (
+        <>
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Sessions</p>
+              <p className="mt-1 text-2xl font-semibold text-white">{totalSessions}</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Players</p>
+              <p className="mt-1 text-2xl font-semibold text-white">{data.length}</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Avg {label}</p>
+              <p className="mt-1 text-2xl font-semibold text-white">
+                {totalSessions > 0
+                  ? Math.round(data.reduce((sum, r) => sum + r.rate, 0) / data.length)
+                  : 0}%
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">100% {label}</p>
+              <p className="mt-1 text-2xl font-semibold text-emerald-400">
+                {data.filter((r) => r.rate === 100).length}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search players..."
+              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400 sm:w-64"
+            />
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}
+              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400">
+              <option value="all">All Players</option>
+              <option value="senior">Senior</option>
+              <option value="junior">Junior</option>
+            </select>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400">
+              <option value="rate_desc">Highest {label.toLowerCase()}</option>
+              <option value="rate_asc">Lowest {label.toLowerCase()}</option>
+              <option value="attended_desc">Most sessions</option>
+              <option value="name_asc">Name A-Z</option>
+              <option value="name_desc">Name Z-A</option>
+            </select>
+          </div>
+
+          <div className="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 w-full">
+            <table className="min-w-full divide-y divide-slate-800">
+              <thead className="bg-slate-900/80">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Player</th>
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Team</th>
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Category</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Attended</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Rate</th>
+                  <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell" style={{ minWidth: 160 }}>Progress</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={6} className="px-4 py-5 text-sm text-slate-400">No players match the filter.</td></tr>
+                ) : (
+                  filtered.map((r) => (
+                    <tr key={r.id}>
+                      <td className="px-4 py-3 text-sm text-slate-100">{r.fullName}</td>
+                      <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{r.team === 'first' ? '1st team' : '2nd team'}</td>
+                      <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{r.category === 'junior' ? 'Junior' : 'Senior'}</td>
+                      <td className="px-4 py-3 text-sm text-slate-200">{r.attended} / {r.total}</td>
+                      <td className={`px-4 py-3 text-sm font-semibold ${getRateColor(r.rate)}`}>{r.rate}%</td>
+                      <td className="hidden px-4 py-3 sm:table-cell">
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                          <div className={`h-full rounded-full ${getRateBarColor(r.rate)}`} style={{ width: `${r.rate}%` }} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
 export default function ReportsManager({ onBack }) {
   const [tab, setTab] = useState('attendance');
   const [players, setPlayers] = useState([]);
   const [error, setError] = useState('');
 
-  // --- Attendance report state ---
-  const currentYear = new Date().getFullYear();
-  const [attFrom, setAttFrom] = useState(new Date(currentYear, 0, 1));
-  const [attTo, setAttTo] = useState(new Date());
-  const [attData, setAttData] = useState([]);
-  const [attTotalSessions, setAttTotalSessions] = useState(0);
-  const [attLoading, setAttLoading] = useState(false);
-  const [attSearch, setAttSearch] = useState('');
-  const [attCategoryFilter, setAttCategoryFilter] = useState('all');
-  const [attSortBy, setAttSortBy] = useState('rate_desc');
-
   // --- Payment report state ---
+  const currentYear = new Date().getFullYear();
   const [payYear, setPayYear] = useState(currentYear);
   const [payData, setPayData] = useState([]);
   const [payLoading, setPayLoading] = useState(false);
@@ -41,88 +269,6 @@ export default function ReportsManager({ onBack }) {
       .select('id, full_name, main_team, category, email')
       .order('full_name', { ascending: true });
     setPlayers(data || []);
-  }
-
-  // ==================== ATTENDANCE REPORT ====================
-  async function generateAttendanceReport() {
-    setAttLoading(true);
-    setError('');
-    const supabase = getSupabaseClient();
-
-    const fromStr = attFrom.toLocaleDateString('en-CA');
-    const toStr = attTo.toLocaleDateString('en-CA');
-
-    const { data: rangeSessions, error: sessErr } = await supabase
-      .from('practice_sessions')
-      .select('id, session_date')
-      .gte('session_date', fromStr)
-      .lte('session_date', toStr)
-      .order('session_date', { ascending: true });
-
-    if (sessErr) { setError(sessErr.message); setAttLoading(false); return; }
-
-    const sessionIds = (rangeSessions || []).map((s) => s.id);
-    setAttTotalSessions(sessionIds.length);
-
-    if (sessionIds.length === 0) {
-      setAttData(players.map((p) => ({
-        id: p.id, fullName: p.full_name, team: p.main_team, category: p.category,
-        attended: 0, total: 0, rate: 0,
-      })));
-      setAttLoading(false);
-      return;
-    }
-
-    const { data: attendanceRows, error: attErr } = await supabase
-      .from('practice_attendance')
-      .select('player_id, session_id')
-      .in('session_id', sessionIds);
-
-    if (attErr) { setError(attErr.message); setAttLoading(false); return; }
-
-    const countMap = new Map();
-    for (const row of (attendanceRows || [])) {
-      countMap.set(row.player_id, (countMap.get(row.player_id) || 0) + 1);
-    }
-
-    setAttData(players.map((p) => {
-      const attended = countMap.get(p.id) || 0;
-      return {
-        id: p.id, fullName: p.full_name, team: p.main_team, category: p.category,
-        attended, total: sessionIds.length,
-        rate: sessionIds.length > 0 ? Math.round((attended / sessionIds.length) * 100) : 0,
-      };
-    }));
-    setAttLoading(false);
-  }
-
-  const filteredAtt = attData
-    .filter((r) => {
-      if (attCategoryFilter !== 'all' && r.category !== attCategoryFilter) return false;
-      const q = attSearch.trim().toLowerCase();
-      if (q && !r.fullName.toLowerCase().includes(q)) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      switch (attSortBy) {
-        case 'rate_asc': return a.rate - b.rate;
-        case 'name_asc': return a.fullName.localeCompare(b.fullName);
-        case 'name_desc': return b.fullName.localeCompare(a.fullName);
-        case 'attended_desc': return b.attended - a.attended;
-        default: return b.rate - a.rate;
-      }
-    });
-
-  function getRateColor(rate) {
-    if (rate >= 75) return 'text-emerald-400';
-    if (rate >= 40) return 'text-amber-400';
-    return 'text-rose-400';
-  }
-
-  function getRateBarColor(rate) {
-    if (rate >= 75) return 'bg-emerald-500';
-    if (rate >= 40) return 'bg-amber-500';
-    return 'bg-rose-500';
   }
 
   // ==================== PAYMENT REPORT ====================
@@ -198,12 +344,6 @@ export default function ReportsManager({ onBack }) {
   const payTotalBalance = payData.reduce((s, r) => s + r.balance, 0);
   const payPaidCount = payData.filter((r) => r.status === 'paid').length;
 
-  function getPayBarColor(progress) {
-    if (progress >= 100) return 'bg-emerald-500';
-    if (progress >= 50) return 'bg-amber-500';
-    return 'bg-rose-500';
-  }
-
   const yearOptions = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2];
 
   return (
@@ -226,22 +366,16 @@ export default function ReportsManager({ onBack }) {
 
       {/* Tab switcher */}
       <div className="mb-6 flex gap-1 rounded-lg border border-slate-800 bg-slate-900 p-1 w-fit">
-        <button
-          type="button"
-          onClick={() => setTab('attendance')}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            tab === 'attendance' ? 'bg-indigo-500 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
-          }`}
-        >
+        <button type="button" onClick={() => setTab('attendance')}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition ${tab === 'attendance' ? 'bg-indigo-500 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>
           Attendance
         </button>
-        <button
-          type="button"
-          onClick={() => setTab('payments')}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            tab === 'payments' ? 'bg-indigo-500 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
-          }`}
-        >
+        <button type="button" onClick={() => setTab('volunteering')}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition ${tab === 'volunteering' ? 'bg-indigo-500 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>
+          Volunteering
+        </button>
+        <button type="button" onClick={() => setTab('payments')}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition ${tab === 'payments' ? 'bg-indigo-500 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}>
           Payments
         </button>
       </div>
@@ -250,141 +384,20 @@ export default function ReportsManager({ onBack }) {
 
       {/* ==================== ATTENDANCE TAB ==================== */}
       {tab === 'attendance' && (
-        <>
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:flex-wrap">
-              <div>
-                <label className="block text-sm text-slate-300 mb-1">From</label>
-                <DatePicker
-                  selected={attFrom}
-                  onChange={(date) => setAttFrom(date)}
-                  dateFormat="yyyy-MM-dd"
-                  className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-                  calendarClassName="dark-datepicker"
-                  selectsStart
-                  startDate={attFrom}
-                  endDate={attTo}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-300 mb-1">To</label>
-                <DatePicker
-                  selected={attTo}
-                  onChange={(date) => setAttTo(date)}
-                  dateFormat="yyyy-MM-dd"
-                  className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-                  calendarClassName="dark-datepicker"
-                  selectsEnd
-                  startDate={attFrom}
-                  endDate={attTo}
-                  minDate={attFrom}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={generateAttendanceReport}
-                disabled={attLoading}
-                className="rounded-lg bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:opacity-60"
-              >
-                {attLoading ? 'Loading...' : 'Generate Report'}
-              </button>
-            </div>
-          </div>
+        <AttendanceReportSection
+          sessionTable="practice_sessions"
+          attendanceTable="practice_attendance"
+          label="Attendance"
+        />
+      )}
 
-          {attData.length > 0 && (
-            <>
-              <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Sessions</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{attTotalSessions}</p>
-                </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Players</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{attData.length}</p>
-                </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Avg Attendance</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">
-                    {attTotalSessions > 0
-                      ? Math.round(attData.reduce((sum, r) => sum + r.rate, 0) / attData.length)
-                      : 0}%
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">100% Attendance</p>
-                  <p className="mt-1 text-2xl font-semibold text-emerald-400">
-                    {attData.filter((r) => r.rate === 100).length}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <input
-                  type="text"
-                  value={attSearch}
-                  onChange={(e) => setAttSearch(e.target.value)}
-                  placeholder="Search players..."
-                  className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400 sm:w-64"
-                />
-                <select
-                  value={attCategoryFilter}
-                  onChange={(e) => setAttCategoryFilter(e.target.value)}
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                >
-                  <option value="all">All Players</option>
-                  <option value="senior">Senior</option>
-                  <option value="junior">Junior</option>
-                </select>
-                <select
-                  value={attSortBy}
-                  onChange={(e) => setAttSortBy(e.target.value)}
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                >
-                  <option value="rate_desc">Highest attendance</option>
-                  <option value="rate_asc">Lowest attendance</option>
-                  <option value="attended_desc">Most sessions</option>
-                  <option value="name_asc">Name A-Z</option>
-                  <option value="name_desc">Name Z-A</option>
-                </select>
-              </div>
-
-              <div className="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 w-full">
-                <table className="min-w-full divide-y divide-slate-800">
-                  <thead className="bg-slate-900/80">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Player</th>
-                      <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Team</th>
-                      <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Category</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Attended</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Rate</th>
-                      <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell" style={{ minWidth: 160 }}>Progress</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {filteredAtt.length === 0 ? (
-                      <tr><td colSpan={6} className="px-4 py-5 text-sm text-slate-400">No players match the filter.</td></tr>
-                    ) : (
-                      filteredAtt.map((r) => (
-                        <tr key={r.id}>
-                          <td className="px-4 py-3 text-sm text-slate-100">{r.fullName}</td>
-                          <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{r.team === 'first' ? '1st team' : '2nd team'}</td>
-                          <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{r.category === 'junior' ? 'Junior' : 'Senior'}</td>
-                          <td className="px-4 py-3 text-sm text-slate-200">{r.attended} / {r.total}</td>
-                          <td className={`px-4 py-3 text-sm font-semibold ${getRateColor(r.rate)}`}>{r.rate}%</td>
-                          <td className="hidden px-4 py-3 sm:table-cell">
-                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                              <div className={`h-full rounded-full ${getRateBarColor(r.rate)}`} style={{ width: `${r.rate}%` }} />
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </>
+      {/* ==================== VOLUNTEERING TAB ==================== */}
+      {tab === 'volunteering' && (
+        <AttendanceReportSection
+          sessionTable="volunteer_sessions"
+          attendanceTable="volunteer_attendance"
+          label="Volunteering"
+        />
       )}
 
       {/* ==================== PAYMENTS TAB ==================== */}
@@ -436,37 +449,23 @@ export default function ReportsManager({ onBack }) {
               </div>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
-                <input
-                  type="text"
-                  value={paySearch}
-                  onChange={(e) => setPaySearch(e.target.value)}
-                  placeholder="Search players..."
-                  className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400 sm:w-64"
-                />
-                <select
-                  value={payCategoryFilter}
-                  onChange={(e) => setPayCategoryFilter(e.target.value)}
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                >
+                <input type="text" value={paySearch} onChange={(e) => setPaySearch(e.target.value)} placeholder="Search players..."
+                  className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400 sm:w-64" />
+                <select value={payCategoryFilter} onChange={(e) => setPayCategoryFilter(e.target.value)}
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400">
                   <option value="all">All Players</option>
                   <option value="senior">Senior</option>
                   <option value="junior">Junior</option>
                 </select>
-                <select
-                  value={payStatusFilter}
-                  onChange={(e) => setPayStatusFilter(e.target.value)}
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                >
+                <select value={payStatusFilter} onChange={(e) => setPayStatusFilter(e.target.value)}
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400">
                   <option value="all">All Statuses</option>
                   <option value="paid">Paid</option>
                   <option value="unpaid">Unpaid</option>
                   <option value="no_record">No Record</option>
                 </select>
-                <select
-                  value={paySortBy}
-                  onChange={(e) => setPaySortBy(e.target.value)}
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                >
+                <select value={paySortBy} onChange={(e) => setPaySortBy(e.target.value)}
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400">
                   <option value="balance_desc">Highest balance</option>
                   <option value="balance_asc">Lowest balance</option>
                   <option value="due_desc">Highest due</option>
