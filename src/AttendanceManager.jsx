@@ -4,7 +4,6 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { getSupabaseClient } from './lib/supabase';
 
 export default function AttendanceManager({ onBack }) {
-  const [tab, setTab] = useState('sessions');
   const [sessions, setSessions] = useState([]);
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,17 +19,6 @@ export default function AttendanceManager({ onBack }) {
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [attendanceSaving, setAttendanceSaving] = useState(false);
   const [playerSearch, setPlayerSearch] = useState('');
-
-  // Report state
-  const currentYear = new Date().getFullYear();
-  const [reportFrom, setReportFrom] = useState(new Date(currentYear, 0, 1));
-  const [reportTo, setReportTo] = useState(new Date());
-  const [reportData, setReportData] = useState([]);
-  const [reportTotalSessions, setReportTotalSessions] = useState(0);
-  const [reportLoading, setReportLoading] = useState(false);
-  const [reportSearch, setReportSearch] = useState('');
-  const [reportCategoryFilter, setReportCategoryFilter] = useState('all');
-  const [reportSortBy, setReportSortBy] = useState('rate_desc');
 
   useEffect(() => {
     fetchSessions();
@@ -180,107 +168,6 @@ export default function AttendanceManager({ onBack }) {
     return p.full_name.toLowerCase().includes(q);
   });
 
-  // --- Report logic ---
-  async function generateReport() {
-    setReportLoading(true);
-    setError('');
-    const supabase = getSupabaseClient();
-
-    const fromStr = reportFrom.toLocaleDateString('en-CA');
-    const toStr = reportTo.toLocaleDateString('en-CA');
-
-    const { data: rangeSessions, error: sessErr } = await supabase
-      .from('practice_sessions')
-      .select('id, session_date')
-      .gte('session_date', fromStr)
-      .lte('session_date', toStr)
-      .order('session_date', { ascending: true });
-
-    if (sessErr) {
-      setError(sessErr.message);
-      setReportLoading(false);
-      return;
-    }
-
-    const sessionIds = (rangeSessions || []).map((s) => s.id);
-    setReportTotalSessions(sessionIds.length);
-
-    if (sessionIds.length === 0) {
-      setReportData(players.map((p) => ({
-        id: p.id,
-        fullName: p.full_name,
-        team: p.main_team,
-        category: p.category,
-        attended: 0,
-        total: 0,
-        rate: 0,
-      })));
-      setReportLoading(false);
-      return;
-    }
-
-    const { data: attendanceRows, error: attErr } = await supabase
-      .from('practice_attendance')
-      .select('player_id, session_id')
-      .in('session_id', sessionIds);
-
-    if (attErr) {
-      setError(attErr.message);
-      setReportLoading(false);
-      return;
-    }
-
-    const countMap = new Map();
-    for (const row of (attendanceRows || [])) {
-      countMap.set(row.player_id, (countMap.get(row.player_id) || 0) + 1);
-    }
-
-    const report = players.map((p) => {
-      const attended = countMap.get(p.id) || 0;
-      return {
-        id: p.id,
-        fullName: p.full_name,
-        team: p.main_team,
-        category: p.category,
-        attended,
-        total: sessionIds.length,
-        rate: sessionIds.length > 0 ? Math.round((attended / sessionIds.length) * 100) : 0,
-      };
-    });
-
-    setReportData(report);
-    setReportLoading(false);
-  }
-
-  const filteredReport = reportData
-    .filter((r) => {
-      if (reportCategoryFilter !== 'all' && r.category !== reportCategoryFilter) return false;
-      const q = reportSearch.trim().toLowerCase();
-      if (q && !r.fullName.toLowerCase().includes(q)) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      switch (reportSortBy) {
-        case 'rate_asc': return a.rate - b.rate;
-        case 'name_asc': return a.fullName.localeCompare(b.fullName);
-        case 'name_desc': return b.fullName.localeCompare(a.fullName);
-        case 'attended_desc': return b.attended - a.attended;
-        default: return b.rate - a.rate;
-      }
-    });
-
-  function getRateColor(rate) {
-    if (rate >= 75) return 'text-emerald-400';
-    if (rate >= 40) return 'text-amber-400';
-    return 'text-rose-400';
-  }
-
-  function getRateBarColor(rate) {
-    if (rate >= 75) return 'bg-emerald-500';
-    if (rate >= 40) return 'bg-amber-500';
-    return 'bg-rose-500';
-  }
-
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="flex items-center justify-between mb-6">
@@ -298,260 +185,80 @@ export default function AttendanceManager({ onBack }) {
               Back to Admin
             </button>
           )}
-          {tab === 'sessions' && (
-            <button onClick={openAddModal} className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400">
-              Add Session
-            </button>
-          )}
+          <button onClick={openAddModal} className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400">
+            Add Session
+          </button>
         </div>
-      </div>
-
-      {/* Tab switcher */}
-      <div className="mb-6 flex gap-1 rounded-lg border border-slate-800 bg-slate-900 p-1 w-fit">
-        <button
-          type="button"
-          onClick={() => setTab('sessions')}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            tab === 'sessions'
-              ? 'bg-indigo-500 text-white'
-              : 'text-slate-300 hover:text-white hover:bg-slate-800'
-          }`}
-        >
-          Sessions
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('report')}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-            tab === 'report'
-              ? 'bg-indigo-500 text-white'
-              : 'text-slate-300 hover:text-white hover:bg-slate-800'
-          }`}
-        >
-          Report
-        </button>
       </div>
 
       {error && <div className="mb-4 rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{error}</div>}
 
-      {/* ===== SESSIONS TAB ===== */}
-      {tab === 'sessions' && (
-        <>
-          {loading ? (
-            <div className="text-slate-300">Loading sessions...</div>
-          ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 w-full">
-              <table className="min-w-full divide-y divide-slate-800">
-                <thead className="bg-slate-900/80">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Date</th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Notes</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Action</th>
+      {loading ? (
+        <div className="text-slate-300">Loading sessions...</div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 w-full">
+          <table className="min-w-full divide-y divide-slate-800">
+            <thead className="bg-slate-900/80">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Date</th>
+                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Notes</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {sessions.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-4 py-5 text-sm text-slate-400">No practice sessions found.</td>
+                </tr>
+              ) : (
+                sessions.map((s) => (
+                  <tr key={s.id}>
+                    <td className="px-4 py-3 text-sm text-slate-100 whitespace-nowrap">{s.session_date}</td>
+                    <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{s.notes || '—'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openAttendanceModal(s)}
+                          title="Manage attendance"
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-600/60 px-3 text-sm text-emerald-200 transition hover:border-emerald-500 hover:text-emerald-100"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor" className="h-4 w-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                          </svg>
+                          Attendance
+                        </button>
+                        <button
+                          onClick={() => openEditModal(s)}
+                          aria-label="Edit session"
+                          title="Edit"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 text-slate-200 transition hover:border-slate-500 hover:text-white"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(s.id)}
+                          aria-label="Delete session"
+                          title="Delete"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-600/60 text-rose-200 transition hover:border-rose-500 hover:text-rose-100"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 6V4h8v2" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 6l-1 14H6L5 6" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 10v7M14 10v7" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {sessions.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="px-4 py-5 text-sm text-slate-400">No practice sessions found.</td>
-                    </tr>
-                  ) : (
-                    sessions.map((s) => (
-                      <tr key={s.id}>
-                        <td className="px-4 py-3 text-sm text-slate-100 whitespace-nowrap">{s.session_date}</td>
-                        <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{s.notes || '—'}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => openAttendanceModal(s)}
-                              title="Manage attendance"
-                              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-600/60 px-3 text-sm text-emerald-200 transition hover:border-emerald-500 hover:text-emerald-100"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor" className="h-4 w-4">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                              </svg>
-                              Attendance
-                            </button>
-                            <button
-                              onClick={() => openEditModal(s)}
-                              aria-label="Edit session"
-                              title="Edit"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 text-slate-200 transition hover:border-slate-500 hover:text-white"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleDelete(s.id)}
-                              aria-label="Delete session"
-                              title="Delete"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-600/60 text-rose-200 transition hover:border-rose-500 hover:text-rose-100"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 6V4h8v2" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 6l-1 14H6L5 6" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M10 10v7M14 10v7" />
-                              </svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ===== REPORT TAB ===== */}
-      {tab === 'report' && (
-        <>
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:flex-wrap">
-              <div>
-                <label className="block text-sm text-slate-300 mb-1">From</label>
-                <DatePicker
-                  selected={reportFrom}
-                  onChange={(date) => setReportFrom(date)}
-                  dateFormat="yyyy-MM-dd"
-                  className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-                  calendarClassName="dark-datepicker"
-                  selectsStart
-                  startDate={reportFrom}
-                  endDate={reportTo}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-300 mb-1">To</label>
-                <DatePicker
-                  selected={reportTo}
-                  onChange={(date) => setReportTo(date)}
-                  dateFormat="yyyy-MM-dd"
-                  className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-                  calendarClassName="dark-datepicker"
-                  selectsEnd
-                  startDate={reportFrom}
-                  endDate={reportTo}
-                  minDate={reportFrom}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={generateReport}
-                disabled={reportLoading}
-                className="rounded-lg bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-indigo-400 disabled:opacity-60"
-              >
-                {reportLoading ? 'Loading...' : 'Generate Report'}
-              </button>
-            </div>
-          </div>
-
-          {reportData.length > 0 && (
-            <>
-              {/* Summary stats */}
-              <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Sessions</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{reportTotalSessions}</p>
-                </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Players</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{reportData.length}</p>
-                </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Avg Attendance</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">
-                    {reportTotalSessions > 0
-                      ? Math.round(reportData.reduce((sum, r) => sum + r.rate, 0) / reportData.length)
-                      : 0}%
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">100% Attendance</p>
-                  <p className="mt-1 text-2xl font-semibold text-emerald-400">
-                    {reportData.filter((r) => r.rate === 100).length}
-                  </p>
-                </div>
-              </div>
-
-              {/* Filters */}
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <input
-                  type="text"
-                  value={reportSearch}
-                  onChange={(e) => setReportSearch(e.target.value)}
-                  placeholder="Search players..."
-                  className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400 sm:w-64"
-                />
-                <select
-                  value={reportCategoryFilter}
-                  onChange={(e) => setReportCategoryFilter(e.target.value)}
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                >
-                  <option value="all">All Players</option>
-                  <option value="senior">Senior</option>
-                  <option value="junior">Junior</option>
-                </select>
-                <select
-                  value={reportSortBy}
-                  onChange={(e) => setReportSortBy(e.target.value)}
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
-                >
-                  <option value="rate_desc">Highest attendance</option>
-                  <option value="rate_asc">Lowest attendance</option>
-                  <option value="attended_desc">Most sessions</option>
-                  <option value="name_asc">Name A-Z</option>
-                  <option value="name_desc">Name Z-A</option>
-                </select>
-              </div>
-
-              {/* Report table */}
-              <div className="mt-4 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 w-full">
-                <table className="min-w-full divide-y divide-slate-800">
-                  <thead className="bg-slate-900/80">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Player</th>
-                      <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Team</th>
-                      <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell">Category</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Attended</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400">Rate</th>
-                      <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-400 sm:table-cell" style={{ minWidth: 160 }}>Progress</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {filteredReport.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="px-4 py-5 text-sm text-slate-400">No players match the filter.</td>
-                      </tr>
-                    ) : (
-                      filteredReport.map((r) => (
-                        <tr key={r.id}>
-                          <td className="px-4 py-3 text-sm text-slate-100">{r.fullName}</td>
-                          <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{r.team === 'first' ? '1st team' : '2nd team'}</td>
-                          <td className="hidden px-4 py-3 sm:table-cell text-sm text-slate-200">{r.category === 'junior' ? 'Junior' : 'Senior'}</td>
-                          <td className="px-4 py-3 text-sm text-slate-200">{r.attended} / {r.total}</td>
-                          <td className={`px-4 py-3 text-sm font-semibold ${getRateColor(r.rate)}`}>{r.rate}%</td>
-                          <td className="hidden px-4 py-3 sm:table-cell">
-                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                              <div
-                                className={`h-full rounded-full ${getRateBarColor(r.rate)}`}
-                                style={{ width: `${r.rate}%` }}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* Add/Edit Session Modal */}

@@ -9,6 +9,7 @@ import TeamManager from './TeamManager';
 import ActivityManager from './ActivityManager';
 import AdminAccessManager from './AdminAccessManager';
 import AttendanceManager from './AttendanceManager';
+import ReportsManager from './ReportsManager';
 import NewsDetail from './landing_page_components/NewsDetail';
 
 const MEMBERSHIP_OPTIONS = [
@@ -994,6 +995,17 @@ function AdminPortalApp() {
                 >
                   Dashboard
                 </button>
+                {userRole === 'admin' && (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentView('reports')}
+                    className={`transition ${
+                      currentView === 'reports' ? 'text-white' : 'hover:text-white'
+                    }`}
+                  >
+                    Reports
+                  </button>
+                )}
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   userRole === 'admin'
                     ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
@@ -1380,6 +1392,24 @@ function AdminPortalApp() {
                     </button>
                   </div>
                 </div>
+                {/* Reports section - admin only */}
+                {userRole === 'admin' && (
+                  <div className="mt-6 border-t border-slate-800 pt-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h2 className="text-lg font-semibold text-white mb-2">Reports</h2>
+                        <p className="mb-3 text-sm text-slate-400">View attendance and payment reports for players.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentView('reports')}
+                        className="w-56 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-400 sm:ml-4 sm:mt-0 mt-3"
+                      >
+                        View Reports
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {/* Admin Access section - admin only */}
                 {userRole === 'admin' && (
                   <div className="mt-6 border-t border-slate-800 pt-6">
@@ -1410,6 +1440,8 @@ function AdminPortalApp() {
             <ActivityManager onBack={() => setCurrentView('admin')} />
           ) : currentView === 'attendance' && userRole === 'admin' ? (
             <AttendanceManager onBack={() => setCurrentView('admin')} />
+          ) : currentView === 'reports' && userRole === 'admin' ? (
+            <ReportsManager onBack={() => setCurrentView('admin')} />
           ) : currentView === 'adminAccess' && userRole === 'admin' ? (
             <AdminAccessManager session={session} hasAdminAccess={hasAdminAccess} onBack={() => setCurrentView('admin')} />
           ) : (
